@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RyukPlay | ⚽ Mundial FIFA 2026 en Tiempo Real</title>
+    <meta name="description" content="Mundial FIFA 2026 en Tiempo Real | RyukPlay.">
+    <meta name="author" content="Lina María Montaño Ramírez  | RyukPlay">
+    <link rel="icon" type="image/x-icon" href="https://calypsobronte.github.io/images/favicon.ico">
+    <link rel="canonical" href="https://calypsobronte.github.io">
+
+    <meta property="og:title" content="⚽ Mundial FIFA 2026 en Tiempo Real | RyukPlay | Backend Developer">
+    <meta property="og:description" content="Mundial FIFA 2026 en Tiempo Real | RyukPlay.">
+    <meta property="og:image" content="https://calypsobronte.github.io/images/preview.jpg">
+    <meta property="og:url" content="https://calypsobronte.github.io">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RyukPlay">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', system_ui, sans-serif; }
+        .teal-score { background: linear-gradient(145deg, #14b8a6, #0f766e); color: white; }
+        .live-dot { animation: pulse-live 2s infinite; }
+        @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+    </style>
+</head>
+<body class="bg-zinc-950 text-white">
+
+    <!-- Header -->
+    <div class="border-b border-white/10 bg-zinc-900/70 backdrop-blur-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-3">
+                
+                <div class="flex items-center gap-x-3">
+                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-tachometer-alt text-white text-2xl"></i>
+                    </div>
+                    <div>
+                        <div class="font-black text-2xl sm:text-3xl tracking-tighter">Resultados en Tiempo Real</div>
+                        <div class="text-[10px] text-emerald-400 -mt-1.5 font-bold tracking-[3px]">FIFA WORLD CUP 2026™</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-wrap items-center gap-x-2 gap-y-2 w-full sm:w-auto">
+                    
+                    <button onclick="showFinishedMatches()" 
+                            class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                        <i class="fa-solid fa-history fa-sm"></i>
+                        <span>Resultados Anteriores</span>
+                    </button>
+
+                    <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank"
+                       class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                        <i class="fa-solid fa-external-link-alt fa-sm"></i>
+                        <span>Obtener Widget OBS</span>
+                    </a>
+
+                    <button onclick="fetchMatches()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-bold w-full sm:w-auto">
+                        <i class="fa-solid fa-sync fa-sm"></i>
+                        <span>Actualizar</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-12">
+        <div class="mb-6">
+            <h3 class="text-3xl sm:text-4xl font-black tracking-tighter">Todos los partidos Mundial 2026</h3>
+            <p class="text-white/60 mt-1 text-sm">Datos en tiempo real de los partidos y resultados del Mundial 2026. tambien puedes obtener el <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="text-[15px] font-black tracking-wider text-white hover:text-emerald-400">widget para tus streams (OBS, Meld Studio, Streamlabs, entre otros).</a></p>
+        </div>
+
+        <div id="matches-container" class="space-y-8"></div>
+
+        <div class="mt-10 text-center">
+            <p class="text-xs text-white/50">
+                Realizado por <a href="https://calypsobronte.github.io/" target="_blank" class="text-[10px] font-black tracking-wider text-white hover:text-emerald-400">
+                        RYUKPLAY
+                    </a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
+        let matchesData = {};
+
+        const relevantTeams = [
+            'ARG','BRA','URU','COL','ECU','PER','CHI','PAR','BOL','VEN',
+            'FRA','ENG','GER','ESP','POR','NED','ITA','CRO','BEL','SRB','SUI','AUT','NOR','SWE','DEN','POL','UKR','ROU','GRE','TUR',
+            'USA','MEX','CAN','CRC','PAN','JAM','HON','SLV','TRI',
+            'SEN','MAR','EGY','NGA','GHA','CIV','CMR','ALG','RSA','TUN','MLI','BFA','COD','ZAM','UGA',
+            'JPN','KOR','AUS','IRN','KSA','IRQ','JOR','UAE','QAT','UZB','VIE','THA','IDN',
+            'NZL','FIJ','PNG'
+        ];
+
+        const flags = {
+            'ARG':'https://flagcdn.com/w80/ar.png','BRA':'https://flagcdn.com/w80/br.png','URU':'https://flagcdn.com/w80/uy.png',
+            'COL':'https://flagcdn.com/w80/co.png','ECU':'https://flagcdn.com/w80/ec.png','PER':'https://flagcdn.com/w80/pe.png',
+            'CHI':'https://flagcdn.com/w80/cl.png','PAR':'https://flagcdn.com/w80/py.png','BOL':'https://flagcdn.com/w80/bo.png','VEN':'https://flagcdn.com/w80/ve.png',
+            'FRA':'https://flagcdn.com/w80/fr.png','ENG':'https://flagcdn.com/w80/gb-eng.png','GER':'https://flagcdn.com/w80/de.png',
+            'ESP':'https://flagcdn.com/w80/es.png','POR':'https://flagcdn.com/w80/pt.png','NED':'https://flagcdn.com/w80/nl.png',
+            'ITA':'https://flagcdn.com/w80/it.png','CRO':'https://flagcdn.com/w80/hr.png','BEL':'https://flagcdn.com/w80/be.png',
+            'SRB':'https://flagcdn.com/w80/rs.png','SUI':'https://flagcdn.com/w80/ch.png','AUT':'https://flagcdn.com/w80/at.png',
+            'NOR':'https://flagcdn.com/w80/no.png','SWE':'https://flagcdn.com/w80/se.png','DEN':'https://flagcdn.com/w80/dk.png',
+            'POL':'https://flagcdn.com/w80/pl.png','UKR':'https://flagcdn.com/w80/ua.png','ROU':'https://flagcdn.com/w80/ro.png',
+            'GRE':'https://flagcdn.com/w80/gr.png','TUR':'https://flagcdn.com/w80/tr.png',
+            'USA':'https://flagcdn.com/w80/us.png','MEX':'https://flagcdn.com/w80/mx.png','CAN':'https://flagcdn.com/w80/ca.png',
+            'CRC':'https://flagcdn.com/w80/cr.png','PAN':'https://flagcdn.com/w80/pa.png','JAM':'https://flagcdn.com/w80/jm.png',
+            'HON':'https://flagcdn.com/w80/hn.png','SLV':'https://flagcdn.com/w80/sv.png','TRI':'https://flagcdn.com/w80/tt.png',
+            'SEN':'https://flagcdn.com/w80/sn.png','MAR':'https://flagcdn.com/w80/ma.png','EGY':'https://flagcdn.com/w80/eg.png',
+            'NGA':'https://flagcdn.com/w80/ng.png','GHA':'https://flagcdn.com/w80/gh.png','CIV':'https://flagcdn.com/w80/ci.png',
+            'CMR':'https://flagcdn.com/w80/cm.png','ALG':'https://flagcdn.com/w80/dz.png','RSA':'https://flagcdn.com/w80/za.png',
+            'TUN':'https://flagcdn.com/w80/tn.png','MLI':'https://flagcdn.com/w80/ml.png','BFA':'https://flagcdn.com/w80/bf.png',
+            'COD':'https://flagcdn.com/w80/cd.png','ZAM':'https://flagcdn.com/w80/zm.png','UGA':'https://flagcdn.com/w80/ug.png',
+            'JPN':'https://flagcdn.com/w80/jp.png','KOR':'https://flagcdn.com/w80/kr.png','AUS':'https://flagcdn.com/w80/au.png',
+            'IRN':'https://flagcdn.com/w80/ir.png','KSA':'https://flagcdn.com/w80/sa.png','IRQ':'https://flagcdn.com/w80/iq.png',
+            'JOR':'https://flagcdn.com/w80/jo.png','UAE':'https://flagcdn.com/w80/ae.png','QAT':'https://flagcdn.com/w80/qa.png',
+            'UZB':'https://flagcdn.com/w80/uz.png','VIE':'https://flagcdn.com/w80/vn.png','THA':'https://flagcdn.com/w80/th.png',
+            'IDN':'https://flagcdn.com/w80/id.png',
+            'NZL':'https://flagcdn.com/w80/nz.png','FIJ':'https://flagcdn.com/w80/fj.png','PNG':'https://flagcdn.com/w80/pg.png'
+        };
+
+        function getMatchStatus(ev) {
+            const status = ev.status || {};
+            const type = status.type || {};
+            const name = (type.name || '').toUpperCase();
+            const state = (type.state || '').toLowerCase();
+
+            if (state === 'in' || name.includes('IN_PROGRESS') || name.includes('HALFTIME')) return 'live';
+            if (state === 'post' || name.includes('FULL_TIME') || name.includes('FINAL')) return 'finished';
+            return 'upcoming';
+        }
+
+        async function fetchMatches() {
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '';
+            matchesData = {};
+
+            try {
+                const res = await fetch(ESPN_API);
+                const data = await res.json();
+                const allEvents = data?.events || [];
+
+                if (!allEvents.length) {
+                    container.innerHTML = `<div class="text-center py-10 text-white/60">No hay partidos disponibles.</div>`;
+                    return;
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const tomorrow = new Date(today);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+
+                const todayEvents = [];
+                const tomorrowEvents = [];
+
+                allEvents.forEach(ev => {
+                    const matchDate = new Date(ev.date);
+                    matchDate.setHours(0, 0, 0, 0);
+
+                    const comp = ev.competitions?.[0];
+                    if (!comp) return;
+
+                    const home = comp.competitors?.find(c => c.homeAway === 'home');
+                    const away = comp.competitors?.find(c => c.homeAway === 'away');
+                    if (!home || !away) return;
+
+                    const hAbbr = home.team?.abbreviation || '???';
+                    const aAbbr = away.team?.abbreviation || '???';
+
+                    if (!relevantTeams.includes(hAbbr) && !relevantTeams.includes(aAbbr)) return;
+
+                    const status = getMatchStatus(ev);
+                    const matchId = `match-${ev.id}`;
+
+                    // Hora programada
+                    const kickoffTime = new Date(ev.date);
+                    const scheduledTime = kickoffTime.toLocaleTimeString('es-CO', { 
+                        hour: '2-digit', minute: '2-digit', hour12: false 
+                    });
+
+                    matchesData[matchId] = {
+                        homeAbbr: hAbbr,
+                        awayAbbr: aAbbr,
+                        homeScore: parseInt(home.score || 0),
+                        awayScore: parseInt(away.score || 0),
+                        status: status,
+                        minute: ev.status?.displayClock || '',
+                        venue: comp.venue?.fullName || 'Estadio',
+                        group: comp.round?.displayName || comp.round?.name || 'GROUP-STAGE',
+                        kickoff: ev.date,
+                        scheduledTime: scheduledTime,
+                        live: status === 'live'
+                    };
+
+                    if (matchDate.getTime() === today.getTime()) todayEvents.push(matchId);
+                    else if (matchDate.getTime() === tomorrow.getTime()) tomorrowEvents.push(matchId);
+                });
+
+                // HOY
+                if (todayEvents.length > 0) {
+                    const header = document.createElement('div');
+                    header.className = 'text-emerald-400 font-bold text-lg mb-4 flex items-center gap-x-2';
+                    header.innerHTML = `<i class="fa-solid fa-calendar-day"></i> <span>HOY</span>`;
+                    container.appendChild(header);
+
+                    todayEvents.slice(0, 6).forEach(id => {
+                        container.appendChild(createMatchCard(id, matchesData[id]));
+                    });
+                }
+
+                // MAÑANA
+                if (tomorrowEvents.length > 0) {
+                    const header = document.createElement('div');
+                    header.className = 'text-emerald-400 font-bold text-lg mt-8 mb-4 flex items-center gap-x-2';
+                    header.innerHTML = `<i class="fa-solid fa-calendar-day"></i> <span>MAÑANA</span>`;
+                    container.appendChild(header);
+
+                    tomorrowEvents.slice(0, 8).forEach(id => {
+                        container.appendChild(createMatchCard(id, matchesData[id]));
+                    });
+                }
+
+            } catch (error) {
+                console.error(error);
+                container.innerHTML = `<div class="text-center py-8 text-red-400">Error al cargar los datos.</div>`;
+            }
+        }
+
+        function createMatchCard(matchId, data) {
+            const div = document.createElement('div');
+            div.className = `bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden`;
+
+            let timeDisplay = '';
+
+            if (data.status === 'live') {
+                // Mostrar minuto actual cuando está en vivo
+                timeDisplay = `<div class="bg-red-500 text-white font-mono font-extrabold text-sm px-4 py-1.5 rounded-r-3xl flex items-center justify-center min-w-[70px]">
+                    <span>${data.minute || "LIVE"}</span>
+                </div>`;
+            } else if (data.status === 'finished') {
+                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-5 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]">
+                    FT
+                </div>`;
+            } else {
+                // Mostrar hora programada
+                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-4 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]">
+                    <span>${data.scheduledTime}</span>
+                </div>`;
+            }
+
+            const statusHTML = data.status === 'live' 
+                ? `<div class="px-3 py-1 bg-red-500 text-white text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><div class="w-2 h-2 bg-white rounded-full live-dot"></div><span>EN VIVO</span></div>`
+                : data.status === 'finished'
+                ? `<div class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-check-double fa-xs"></i><span>FINALIZADO</span></div>`
+                : `<div class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-clock fa-xs"></i><span>PRÓXIMO</span></div>`;
+
+            div.innerHTML = `
+                <div class="px-4 sm:px-5 pt-3 pb-1">
+                    <div class="flex items-center justify-between mb-2">
+                        <div class="flex items-center gap-x-2 text-xs">
+                            <span class="text-emerald-400 font-bold">${data.group}</span>
+                        </div>
+                        ${statusHTML}
+                    </div>
+
+                    <div class="flex items-center bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden">
+                        <div class="flex items-center flex-1 pl-4 pr-3 py-3.5 gap-x-3 bg-gradient-to-r from-rose-500/10 to-transparent">
+                            <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+                            <div class="font-extrabold text-xl">${data.homeAbbr}</div>
+                        </div>
+                        
+                        <div class="teal-score w-[58px] h-[50px] flex items-center justify-center text-3xl font-black rounded-3xl mx-1 border border-white/30">
+                            <span>${data.homeScore}</span>
+                        </div>
+                        
+                        <div class="px-2 flex flex-col items-center">
+                            <div class="text-2xl">🏆</div>
+                        </div>
+                        
+                        <div class="teal-score w-[58px] h-[50px] flex items-center justify-center text-3xl font-black rounded-3xl mx-1 border border-white/30">
+                            <span>${data.awayScore}</span>
+                        </div>
+                        
+                        <div class="flex items-center flex-1 justify-end pr-4 pl-3 py-3.5 gap-x-3 bg-gradient-to-l from-purple-500/10 to-transparent">
+                            <div class="font-extrabold text-xl">${data.awayAbbr}</div>
+                            <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+                        </div>
+
+                        ${timeDisplay}
+                    </div>
+
+                    <!-- Ciudad / Estadio -->
+                    <div class="mt-1.5 text-xs text-white/50 flex items-center gap-x-1.5 px-1">
+                        <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
+                        <span>${data.venue}</span>
+                    </div>
+                </div>
+            `;
+            return div;
+        }
+
+        function showFinishedMatches() {
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '';
+
+            const finished = Object.values(matchesData).filter(m => m.status === 'finished');
+
+            if (finished.length === 0) {
+                container.innerHTML = `<div class="text-center py-10 text-white/60">No hay partidos finalizados aún.</div>`;
+                return;
+            }
+
+            const header = document.createElement('div');
+            header.className = 'text-emerald-400 font-bold text-lg mb-4 flex items-center gap-x-2';
+            header.innerHTML = `<i class="fa-solid fa-history"></i> <span>RESULTADOS ANTERIORES</span>`;
+            container.appendChild(header);
+
+            finished.forEach(match => {
+                const card = createFinishedCard(match);
+                container.appendChild(card);
+            });
+        }
+
+        function createFinishedCard(data) {
+            const div = document.createElement('div');
+            div.className = `bg-zinc-900 border border-white/10 rounded-3xl p-4`;
+
+            div.innerHTML = `
+                <div class="flex items-center justify-between mb-2">
+                    <div class="text-xs text-emerald-400 font-bold">${data.group}</div>
+                    <div class="px-3 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-2xl flex items-center gap-x-1.5">
+                        <i class="fa-solid fa-check-double fa-xs"></i>
+                        <span>Fin del partido</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-x-3 flex-1">
+                        <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+                        <span class="font-bold text-lg">${data.homeAbbr}</span>
+                    </div>
+
+                    <div class="flex items-center gap-x-4 px-6">
+                        <span class="font-black text-3xl">${data.homeScore}</span>
+                        <span class="text-white/40 text-xl">-</span>
+                        <span class="font-black text-3xl">${data.awayScore}</span>
+                    </div>
+
+                    <div class="flex items-center gap-x-3 flex-1 justify-end">
+                        <span class="font-bold text-lg">${data.awayAbbr}</span>
+                        <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+                    </div>
+                </div>
+
+                <div class="mt-2 text-xs text-white/50 flex items-center gap-x-1.5">
+                    <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
+                    <span>${data.venue}</span>
+                </div>
+            `;
+            return div;
+        }
+
+        function updateLiveClock() {
+            const clock = document.getElementById('live-clock');
+            if (!clock) return;
+            setInterval(() => {
+                const d = new Date(new Date().getTime() - (5 * 60 * 60 * 1000));
+                clock.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
+            }, 10000);
+        }
+
+        window.onload = function() {
+	    console.log('%c[Tiempo real partidos] Mundial 2026 - Hecho por RyukPlay (Completo y Funcional)', 'color:#14b8a6');
+            updateLiveClock();
+            fetchMatches();
+        };
+    </script>
+</body>
+</html>

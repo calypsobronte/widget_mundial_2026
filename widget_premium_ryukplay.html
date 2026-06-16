@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget • Mundial 2026 | RyukPlay</title>
+    <meta name="description" content="Widget • Mundial 2026 | RyukPlay.">
+    <meta name="author" content="Lina María Montaño Ramírez | RyukPlay">
+    <link rel="icon" type="image/x-icon" href="https://calypsobronte.github.io/images/favicon.ico">
+    <link rel="canonical" href="https://calypsobronte.github.io">
+
+    <meta property="og:title" content="Widget • Mundial 2026| RyukPlay | Backend Developer">
+    <meta property="og:description" content="Widget • Mundial 2026 | RyukPlay.">
+    <meta property="og:image" content="https://calypsobronte.github.io/images/preview.jpg">
+    <meta property="og:url" content="https://calypsobronte.github.io">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="RyukPlay">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&amp;family=Roboto+Mono:wght@600&amp;display=swap');
+
+        body {
+            background: transparent;
+            margin: 0;
+            padding: 15px;
+            font-family: 'Inter', system_ui, sans-serif;
+            overflow: hidden;
+        }
+        
+        .widget-container {
+            width: 100%;
+            max-width: 1100px;
+            background: rgba(15, 15, 15, 0.92);
+            border-radius: 20px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.55),
+                        0 0 0 1px rgba(255,255,255,0.08),
+                        inset 0 1px 0 rgba(255,255,255,0.05);
+            overflow: hidden;
+            border: 1px solid rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            transition: box-shadow 0.4s ease;
+        }
+        
+        .brand-bar {
+            background: rgba(17, 17, 17, 0.95);
+            padding: 8px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        
+        .info-header {
+            background: rgba(17, 17, 17, 0.85);
+            padding: 12px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 14px;
+            font-weight: 600;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        
+        .score-main {
+            background: rgba(10, 10, 10, 0.55);
+            padding: 18px 28px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .team-section {
+            display: flex;
+            align-items: center;
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .flag {
+            width: 44px;
+            height: 30px;
+            border-radius: 6px;
+            object-fit: cover;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+        }
+        
+        .team-code {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: 1.2px;
+            margin: 0 12px;
+            color: #f1f5f9;
+            white-space: nowrap;
+        }
+        
+        .score-box {
+            background: linear-gradient(145deg, #134e4b, #0f766e);
+            width: 72px;
+            height: 66px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 38px;
+            font-weight: 900;
+            color: white;
+            border-radius: 18px;
+            box-shadow: inset 0 4px 8px rgba(255,255,255,0.25),
+                        0 8px 20px rgba(0,0,0,0.5);
+            flex-shrink: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .score-update {
+            animation: scorePop 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+        
+        @keyframes scorePop {
+            0% { transform: scale(0.6); color: #22c55e; }
+            40% { transform: scale(1.3); }
+            70% { transform: scale(0.95); }
+            100% { transform: scale(1); color: white; }
+        }
+        
+        .goal-flash {
+            animation: goalFlashAnim 0.9s ease forwards;
+        }
+        
+        @keyframes goalFlashAnim {
+            0%, 100% { box-shadow: inset 0 4px 8px rgba(255,255,255,0.25), 0 8px 20px rgba(0,0,0,0.5); }
+            30% { 
+                box-shadow: inset 0 4px 8px rgba(255,255,255,0.25), 
+                           0 8px 20px rgba(0,0,0,0.5), 
+                           0 0 0 1px #22c55e,
+                           0 0 30px rgba(34, 197, 94, 0.7);
+            }
+        }
+        
+        .fifa-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0 16px;
+            flex-shrink: 0;
+        }
+        
+        .fifa-trophy {
+            font-size: 38px;
+            color: #eab308;
+            filter: drop-shadow(0 4px 8px rgba(234, 179, 8, 0.3));
+        }
+        
+        .fifa-year {
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            color: #eab308;
+            margin-top: -2px;
+        }
+        
+        .time-pill {
+            background: rgba(31, 41, 55, 0.9);
+            color: #e5e7eb;
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 700;
+            padding: 10px 26px;
+            border-radius: 9999px;
+            font-size: 20px;
+            min-width: 105px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        
+        .status-pill {
+            font-size: 12px;
+            font-weight: 800;
+            padding: 5px 16px;
+            border-radius: 9999px;
+        }
+
+        .live-blink {
+            animation: livePulse 1.4s infinite ease-in-out;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { background-color: #ef4444; }
+            50% { background-color: #b91c1c; }
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-container mx-auto" id="widget-container">
+       
+        <!-- Brand Bar -->
+        <div class="brand-bar text-white">
+            <div class="fifa-brand">
+                
+                <div>
+		    <i class="fa-solid fa-tachometer-alt text-emerald-400 text-xl"> </i>
+                    <span class="font-black tracking-[3px] text-sm">FIFA WORLD CUP</span>
+                    <span class="font-black text-lg text-yellow-400 tracking-[1px] ml-1">2026</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-3">                
+                <div class="flex items-center gap-x-1.5 pl-3 border-l border-white/20">
+                    <span class="text-[10px] font-semibold text-emerald-400">Hecho por</span>
+                    <a href="https://calypsobronte.github.io/" target="_blank" class="text-[10px] font-black tracking-wider text-white hover:text-emerald-400">
+                        RYUKPLAY
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Header -->
+        <div class="info-header text-white/90">
+            <div class="flex items-center gap-x-3">
+                <div class="flex items-center gap-x-2">
+                    <span id="group-text" class="font-extrabold text-emerald-400 tracking-wide text-xs">GROUP-STAGE</span>
+                    <span class="text-white/30">•</span>
+                    <span class="text-emerald-400/80">📍</span>
+                    <span id="stadium-text" class="font-medium text-white/90 text-sm">SoFi Stadium</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-x-4">
+                <div id="status-pill" class="status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-amber-500 text-black text-xs font-extrabold tracking-wider">
+                    <div id="status-dot" class="w-2 h-2 bg-[#111111] rounded-full"></div>
+                    <span id="status-text">PRÓXIMO</span>
+                </div>
+                
+                <div class="text-white/60 text-xs font-medium">
+                    <span id="kickoff-time">—</span>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Score Bar -->
+        <div class="score-main flex items-center text-white">
+           
+            <div class="team-section flex-1" style="justify-content: flex-start; min-width: 0;">
+                <img id="home-flag" src="https://flagcdn.com/w80/sa.png" class="flag" alt="Home">
+                <div class="w-3 h-3 bg-blue-400 rounded-full mx-3 flex-shrink-0"></div>
+                <span id="home-code" class="team-code">KSA</span>
+            </div>
+            
+            <div id="home-score-box" class="score-box">
+                <span id="home-score" class="score-value">0</span>
+            </div>
+            
+            <!-- Centro FIFA Mejorado -->
+            <div class="fifa-center">
+                <i class="fa-solid fa-trophy fifa-trophy"></i>
+                <div class="fifa-year">2026</div>
+            </div>
+            
+            <div id="away-score-box" class="score-box">
+                <span id="away-score" class="score-value">0</span>
+            </div>
+            
+            <div class="team-section flex-1" style="justify-content: flex-end; min-width: 0;">
+                <span id="away-code" class="team-code">URU</span>
+                <div class="w-3 h-3 bg-white/80 rounded-full mx-3 flex-shrink-0"></div>
+                <img id="away-flag" src="https://flagcdn.com/w80/uy.png" class="flag" alt="Away">
+            </div>
+            
+            <div id="time-pill" class="time-pill font-mono ml-4">
+                <span id="time-text">—</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
+        
+        let currentMatch = null;
+        let prevHomeScore = 0;
+        let prevAwayScore = 0;
+
+        function getMatchStatus(ev) {
+            const status = ev.status || {};
+            const type = status.type || {};
+            const name = (type.name || '').toUpperCase();
+            const state = (type.state || '').toLowerCase();
+
+            if (state === 'in' || name.includes('IN_PROGRESS') || name.includes('HALFTIME')) return 'live';
+            if (state === 'post' || name.includes('FULL_TIME') || name.includes('FINAL')) return 'finished';
+            return 'upcoming';
+        }
+
+        async function fetchData() {
+            try {
+                const res = await fetch(ESPN_API);
+                const data = await res.json();
+                if (!data?.events) return;
+
+                const relevantTeams = [
+                    'KSA','URU','ESP','CPV','BEL','EGY','IRN','NZL','FRA','SEN',
+                    'ARG','BRA','ENG','GER','POR','NED','ITA','CRO','MEX','USA',
+                    'CAN','COL','ECU','PER','CHI','PAR','JPN','KOR','AUS','MAR',
+                    'TUN','ALG','NGA','GHA','CIV','CMR','RSA','QAT','UAE','IRQ',
+                    'JOR','SYR','UZB','VIE','THA','IDN','PHI','HKG','TPE','SGP',
+                    'PRK','FIJ','PNG','SOL','VAN','NCL','PYF','ASA','SAM','TON','COK'
+                ];
+
+                let liveMatches = [];
+                let upcomingMatches = [];
+                let finishedMatches = [];
+
+                data.events.forEach(ev => {
+                    const comp = ev.competitions?.[0];
+                    if (!comp) return;
+
+                    const home = comp.competitors?.find(c => c.homeAway === 'home');
+                    const away = comp.competitors?.find(c => c.homeAway === 'away');
+                    if (!home || !away) return;
+
+                    const hAbbr = home.team?.abbreviation || '???';
+                    const aAbbr = away.team?.abbreviation || '???';
+
+                    if (!relevantTeams.includes(hAbbr) && !relevantTeams.includes(aAbbr)) return;
+
+                    const matchStatus = getMatchStatus(ev);
+
+                    const obj = {
+                        id: ev.id,
+                        homeAbbr: hAbbr,
+                        awayAbbr: aAbbr,
+                        homeScore: parseInt(home.score || 0),
+                        awayScore: parseInt(away.score || 0),
+                        status: matchStatus,
+                        minute: ev.status?.displayClock || '',
+                        venue: comp.venue?.fullName || 'Estadio',
+                        group: comp.round?.displayName || comp.round?.name || 'GROUP-STAGE',
+                        kickoff: ev.date
+                    };
+
+                    if (matchStatus === 'live') liveMatches.push(obj);
+                    else if (matchStatus === 'finished') finishedMatches.push(obj);
+                    else upcomingMatches.push(obj);
+                });
+
+                let bestMatch = null;
+
+                if (liveMatches.length > 0) {
+                    bestMatch = liveMatches[0];
+                } else if (upcomingMatches.length > 0) {
+                    upcomingMatches.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+                    bestMatch = upcomingMatches[0];
+                } else if (finishedMatches.length > 0) {
+                    finishedMatches.sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
+                    bestMatch = finishedMatches[0];
+                }
+
+                if (bestMatch) {
+                    updateWidget(bestMatch);
+                }
+
+            } catch (err) {
+                console.error(err);
+            }
+        }
+
+        function triggerGoalEffect(element) {
+            const container = document.getElementById('widget-container');
+            
+            element.classList.remove('goal-flash');
+            void element.offsetWidth;
+            element.classList.add('goal-flash');
+            
+            container.style.boxShadow = '0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px #22c55e, inset 0 1px 0 rgba(255,255,255,0.05)';
+            
+            setTimeout(() => {
+                container.style.boxShadow = '0 20px 50px rgba(0,0,0,0.55), 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.05)';
+            }, 1200);
+        }
+
+        function updateWidget(match) {
+            const isNewMatch = !currentMatch || currentMatch.id !== match.id;
+
+            document.getElementById('home-code').textContent = match.homeAbbr;
+            document.getElementById('away-code').textContent = match.awayAbbr;
+            document.getElementById('stadium-text').textContent = match.venue || 'Estadio';
+            document.getElementById('group-text').textContent = match.group || 'GROUP-STAGE';
+
+            const flags = {
+                'KSA':'https://flagcdn.com/w80/sa.png','URU':'https://flagcdn.com/w80/uy.png','ESP':'https://flagcdn.com/w80/es.png',
+                'CPV':'https://flagcdn.com/w80/cv.png','BEL':'https://flagcdn.com/w80/be.png','EGY':'https://flagcdn.com/w80/eg.png',
+                'IRN':'https://flagcdn.com/w80/ir.png','NZL':'https://flagcdn.com/w80/nz.png','FRA':'https://flagcdn.com/w80/fr.png',
+                'SEN':'https://flagcdn.com/w80/sn.png','ARG':'https://flagcdn.com/w80/ar.png','BRA':'https://flagcdn.com/w80/br.png',
+                'ENG':'https://flagcdn.com/w80/gb-eng.png','GER':'https://flagcdn.com/w80/de.png','POR':'https://flagcdn.com/w80/pt.png',
+                'NED':'https://flagcdn.com/w80/nl.png','ITA':'https://flagcdn.com/w80/it.png','CRO':'https://flagcdn.com/w80/hr.png',
+                'MEX':'https://flagcdn.com/w80/mx.png','USA':'https://flagcdn.com/w80/us.png','CAN':'https://flagcdn.com/w80/ca.png',
+                'COL':'https://flagcdn.com/w80/co.png','ECU':'https://flagcdn.com/w80/ec.png','PER':'https://flagcdn.com/w80/pe.png',
+                'CHI':'https://flagcdn.com/w80/cl.png','PAR':'https://flagcdn.com/w80/py.png','JPN':'https://flagcdn.com/w80/jp.png',
+                'KOR':'https://flagcdn.com/w80/kr.png','AUS':'https://flagcdn.com/w80/au.png','MAR':'https://flagcdn.com/w80/ma.png',
+                'TUN':'https://flagcdn.com/w80/tn.png','ALG':'https://flagcdn.com/w80/dz.png','NGA':'https://flagcdn.com/w80/ng.png',
+                'GHA':'https://flagcdn.com/w80/gh.png','CIV':'https://flagcdn.com/w80/ci.png','CMR':'https://flagcdn.com/w80/cm.png',
+                'RSA':'https://flagcdn.com/w80/za.png','QAT':'https://flagcdn.com/w80/qa.png','UAE':'https://flagcdn.com/w80/ae.png',
+                'IRQ':'https://flagcdn.com/w80/iq.png','JOR':'https://flagcdn.com/w80/jo.png','SYR':'https://flagcdn.com/w80/sy.png',
+                'UZB':'https://flagcdn.com/w80/uz.png','VIE':'https://flagcdn.com/w80/vn.png','THA':'https://flagcdn.com/w80/th.png',
+                'IDN':'https://flagcdn.com/w80/id.png','PHI':'https://flagcdn.com/w80/ph.png','HKG':'https://flagcdn.com/w80/hk.png',
+                'TPE':'https://flagcdn.com/w80/tw.png','SGP':'https://flagcdn.com/w80/sg.png','PRK':'https://flagcdn.com/w80/kp.png',
+                'FIJ':'https://flagcdn.com/w80/fj.png','PNG':'https://flagcdn.com/w80/pg.png','SOL':'https://flagcdn.com/w80/sb.png',
+                'VAN':'https://flagcdn.com/w80/vu.png','NCL':'https://flagcdn.com/w80/nc.png','PYF':'https://flagcdn.com/w80/pf.png',
+                'ASA':'https://flagcdn.com/w80/as.png','SAM':'https://flagcdn.com/w80/ws.png','TON':'https://flagcdn.com/w80/to.png',
+                'COK':'https://flagcdn.com/w80/ck.png'
+            };
+            
+            document.getElementById('home-flag').src = flags[match.homeAbbr] || 'https://flagcdn.com/w80/un.png';
+            document.getElementById('away-flag').src = flags[match.awayAbbr] || 'https://flagcdn.com/w80/un.png';
+
+            const homeScoreEl = document.getElementById('home-score');
+            const awayScoreEl = document.getElementById('away-score');
+            const homeBox = document.getElementById('home-score-box');
+            const awayBox = document.getElementById('away-score-box');
+
+            const newHome = match.homeScore;
+            const newAway = match.awayScore;
+
+            if (!isNewMatch) {
+                if (newHome !== prevHomeScore) {
+                    const isGoal = newHome > prevHomeScore;
+                    if (isGoal) triggerGoalEffect(homeBox);
+                    homeScoreEl.classList.add('score-update');
+                    setTimeout(() => homeScoreEl.classList.remove('score-update'), 600);
+                }
+                
+                if (newAway !== prevAwayScore) {
+                    const isGoal = newAway > prevAwayScore;
+                    if (isGoal) triggerGoalEffect(awayBox);
+                    awayScoreEl.classList.add('score-update');
+                    setTimeout(() => awayScoreEl.classList.remove('score-update'), 600);
+                }
+            }
+
+            homeScoreEl.textContent = newHome;
+            awayScoreEl.textContent = newAway;
+
+            prevHomeScore = newHome;
+            prevAwayScore = newAway;
+
+            // Estado
+            const statusPill = document.getElementById('status-pill');
+            const statusText = document.getElementById('status-text');
+
+            if (match.status === 'live') {
+                statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-red-500 text-white text-xs font-extrabold tracking-wider live-blink';
+                statusText.textContent = 'EN VIVO';
+            } else if (match.status === 'finished') {
+                statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-emerald-500 text-white text-xs font-extrabold tracking-wider';
+                statusText.textContent = 'FINALIZADO';
+            } else {
+                statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-amber-500 text-black text-xs font-extrabold tracking-wider';
+                statusText.textContent = 'PRÓXIMO';
+            }
+
+            // Tiempo
+            const timeText = document.getElementById('time-text');
+            const timeEl = document.getElementById('time-pill');
+
+            if (match.status === 'live') {
+                timeText.textContent = match.minute || "LIVE";
+                timeEl.style.background = '#ef4444';
+                timeEl.style.color = 'white';
+            } else if (match.status === 'finished') {
+                timeText.textContent = 'FT';
+                timeEl.style.background = 'rgba(31, 41, 55, 0.9)';
+                timeEl.style.color = '#e5e7eb';
+            } else {
+                const d = new Date(match.kickoff);
+                timeText.textContent = d.toLocaleTimeString('es-CO', { 
+                    hour: '2-digit', minute: '2-digit', hour12: false 
+                });
+                timeEl.style.background = 'rgba(31, 41, 55, 0.9)';
+                timeEl.style.color = '#d1d5db';
+            }
+
+            currentMatch = match;
+        }
+
+        async function init() {
+            console.log('%c[Widget para streams] Mundial 2026 - Hecho por RyukPlay (Completo y Funcional)', 'color:#14b8a6');
+            await fetchData();
+            setInterval(fetchData, 30000);
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
