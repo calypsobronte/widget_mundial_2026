@@ -175,12 +175,20 @@
                     else if (matchDate.getTime() === tomorrow.getTime()) tomorrowEvents.push(matchId);
                 });
 
-                if (Object.keys(previousData).length === 0) {
+                /*if (Object.keys(previousData).length === 0) {
+                    container.innerHTML = '';
+                    renderMatches(todayEvents, tomorrowEvents);
+                } else {
+                    updateMatchesUI(todayEvents, tomorrowEvents);
+                }*/
+                const isShowingMainView = document.getElementById(Object.keys(matchesData)[0]);
+                if (!isShowingMainView) {
                     container.innerHTML = '';
                     renderMatches(todayEvents, tomorrowEvents);
                 } else {
                     updateMatchesUI(todayEvents, tomorrowEvents);
                 }
+                previousData = { ...matchesData };
 
             } catch (error) {
                 console.error(error);
