@@ -82,6 +82,7 @@
     </div>
 
     <script>
+        let currentView = 'main';
         const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
         let matchesData = {};
         let previousData = {};
@@ -101,6 +102,7 @@
         }
 
         function manualRefresh() {
+            currentView = 'main';
             const icon = document.getElementById('refresh-icon');
             icon.style.animation = 'spin 1s linear infinite';
             previousData = {};
@@ -181,12 +183,13 @@
                 } else {
                     updateMatchesUI(todayEvents, tomorrowEvents);
                 }*/
-                const isShowingMainView = document.getElementById(Object.keys(matchesData)[0]);
-                if (!isShowingMainView) {
-                    container.innerHTML = '';
-                    renderMatches(todayEvents, tomorrowEvents);
-                } else {
-                    updateMatchesUI(todayEvents, tomorrowEvents);
+                if (currentView === 'main') {
+                    if (Object.keys(previousData).length === 0) {
+                        container.innerHTML = '';
+                        renderMatches(todayEvents, tomorrowEvents);
+                    } else {
+                        updateMatchesUI(todayEvents, tomorrowEvents);
+                    }
                 }
                 previousData = { ...matchesData };
 
@@ -318,8 +321,9 @@
             `;
             return div;
         }
-
+        
         function showFinishedMatches() {
+            currentView = 'finished';
             const container = document.getElementById('matches-container');
             container.innerHTML = '';
             const finished = Object.values(matchesData).filter(m => m.status === 'finished');
