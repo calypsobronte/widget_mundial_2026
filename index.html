@@ -27,6 +27,10 @@
             0% { background-color: rgba(16, 185, 129, 0.3); }
             100% { background-color: transparent; }
         }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
@@ -98,8 +102,11 @@
 
         function manualRefresh() {
             const icon = document.getElementById('refresh-icon');
-            icon.style.animation = 'spin 1s linear';
-            fetchMatches();
+            icon.style.animation = 'spin 1s linear infinite';
+            previousData = {};
+            fetchMatches().finally(() => {
+                icon.style.animation = '';
+            });
         }
 
         async function fetchMatches() {
