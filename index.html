@@ -104,6 +104,8 @@
             const icon = document.getElementById('refresh-icon');
             icon.style.animation = 'spin 1s linear infinite';
             previousData = {};
+            const container = document.getElementById('matches-container');
+            container.innerHTML = '';
             fetchMatches().finally(() => {
                 icon.style.animation = '';
             });
