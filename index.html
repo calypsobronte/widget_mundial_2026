@@ -370,12 +370,14 @@
                 clock.textContent = `${d.getHours().toString().padStart(2,'0')}:${d.getMinutes().toString().padStart(2,'0')}`;
             }, 10000);
         }
-
-        window.onload = function() {
-	    console.log('%c[Tiempo real partidos] Mundial 2026 - Hecho por RyukPlay (Completo y Funcional)', 'color:#14b8a6');
+		async function init() {
+            console.log('%c[Widget para streams] Mundial 2026 - Hecho por RyukPlay (Completo y Funcional)', 'color:#14b8a6');
             updateLiveClock();
-            fetchMatches();
-        };
+            await fetchMatches();
+            setInterval(fetchMatches, 30000);
+        }
+
+        window.onload = init;
     </script>
 </body>
 </html>
