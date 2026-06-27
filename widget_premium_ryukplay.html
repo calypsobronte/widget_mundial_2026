@@ -19,13 +19,13 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&amp;family=Roboto+Mono:wght@600&amp;display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@500;600;700&family=Roboto+Mono:wght@600&display=swap');
 
         body {
             background: transparent;
             margin: 0;
             padding: 15px;
-            font-family: 'Inter', system_ui, sans-serif;
+            font-family: 'Inter', system-ui, sans-serif;
             overflow: hidden;
         }
         
@@ -188,6 +188,18 @@
             0%, 100% { background-color: #ef4444; }
             50% { background-color: #b91c1c; }
         }
+
+        /* Error state cuando no se encuentra el partido filtrado */
+        .no-match-banner {
+            background: rgba(251, 191, 36, 0.15);
+            border-top: 1px solid rgba(251, 191, 36, 0.3);
+            padding: 8px 28px;
+            font-size: 12px;
+            color: #fbbf24;
+            font-weight: 600;
+            text-align: center;
+            letter-spacing: 0.5px;
+        }
     </style>
 </head>
 <body>
@@ -196,9 +208,8 @@
         <!-- Brand Bar -->
         <div class="brand-bar text-white">
             <div class="fifa-brand">
-                
                 <div>
-		    <i class="fa-solid fa-tachometer-alt text-emerald-400 text-xl"> </i>
+                    <i class="fa-solid fa-tachometer-alt text-emerald-400 text-xl"> </i>
                     <span class="font-black tracking-[3px] text-sm">FIFA WORLD CUP</span>
                     <span class="font-black text-lg text-yellow-400 tracking-[1px] ml-1">2026</span>
                 </div>
@@ -250,7 +261,7 @@
                 <span id="home-score" class="score-value">0</span>
             </div>
             
-            <!-- Centro FIFA Mejorado -->
+            <!-- Centro FIFA -->
             <div class="fifa-center">
                 <i class="fa-solid fa-trophy fifa-trophy"></i>
                 <div class="fifa-year">2026</div>
@@ -270,11 +281,59 @@
                 <span id="time-text">—</span>
             </div>
         </div>
+
+        <!-- Banner cuando no se encuentra el partido filtrado (oculto por defecto) -->
+        <div id="no-match-banner" class="no-match-banner" style="display: none;">
+            ⚠️ Partido no encontrado con los filtros actuales — mostrando el más relevante disponible
+        </div>
     </div>
 
     <script>
         const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
         
+        // ─── NUEVO: Leer parámetros de la URL ─────────────────────────────────────
+        // Ejemplos de uso:
+        //   widget.html?home=ESP&away=BRA   → partido exacto ESP vs BRA
+        //   widget.html?team=COL            → cualquier partido donde juegue COL
+        //   widget.html?home=ARG            → partido donde ARG sea local
+        //   widget.html?away=GER            → partido donde GER sea visitante
+        //   widget.html                     → comportamiento original (auto)
+        const urlParams = new URLSearchParams(window.location.search);
+        const filterHome = (urlParams.get('home') || '').toUpperCase().trim();
+        const filterAway = (urlParams.get('away') || '').toUpperCase().trim();
+        const filterTeam = (urlParams.get('team') || '').toUpperCase().trim();
+
+        // Función que decide si un partido coincide con los filtros de la URL
+        function matchesFilter(match) {
+            // Sin filtros → acepta todo
+            if (!filterHome && !filterAway && !filterTeam) return true;
+
+            // ?team=XXX → el equipo puede jugar como local O visitante
+            if (filterTeam) {
+                return match.homeAbbr === filterTeam || match.awayAbbr === filterTeam;
+            }
+
+            // ?home=A&away=B → partido exacto (en cualquier orden de equipos en la API)
+            // La API a veces invierte local/visitante, así que buscamos ambas combinaciones
+            if (filterHome && filterAway) {
+                return (match.homeAbbr === filterHome && match.awayAbbr === filterAway) ||
+                       (match.homeAbbr === filterAway && match.awayAbbr === filterHome);
+            }
+
+            // Solo ?home=X
+            if (filterHome) {
+                return match.homeAbbr === filterHome || match.awayAbbr === filterHome;
+            }
+
+            // Solo ?away=X
+            if (filterAway) {
+                return match.homeAbbr === filterAway || match.awayAbbr === filterAway;
+            }
+
+            return true;
+        }
+        // ──────────────────────────────────────────────────────────────────────────
+
         let currentMatch = null;
         let prevHomeScore = 0;
         let prevAwayScore = 0;
@@ -302,12 +361,15 @@
                     'CAN','COL','ECU','PER','CHI','PAR','JPN','KOR','AUS','MAR',
                     'TUN','ALG','NGA','GHA','CIV','CMR','RSA','QAT','UAE','IRQ',
                     'JOR','SYR','UZB','VIE','THA','IDN','PHI','HKG','TPE','SGP',
-                    'PRK','FIJ','PNG','SOL','VAN','NCL','PYF','ASA','SAM','TON','COK', 'NOR'
+                    'PRK','FIJ','PNG','SOL','VAN','NCL','PYF','ASA','SAM','TON','COK','NOR'
                 ];
 
                 let liveMatches = [];
                 let upcomingMatches = [];
                 let finishedMatches = [];
+
+                // También añadimos los equipos del filtro a la lista (por si no están)
+                const extraTeams = [filterHome, filterAway, filterTeam].filter(Boolean);
 
                 data.events.forEach(ev => {
                     const comp = ev.competitions?.[0];
@@ -320,7 +382,10 @@
                     const hAbbr = home.team?.abbreviation || '???';
                     const aAbbr = away.team?.abbreviation || '???';
 
-                    if (!relevantTeams.includes(hAbbr) && !relevantTeams.includes(aAbbr)) return;
+                    // Incluir el partido si está en la lista conocida O si es uno de los filtros
+                    const isKnown = relevantTeams.includes(hAbbr) || relevantTeams.includes(aAbbr);
+                    const isFiltered = extraTeams.includes(hAbbr) || extraTeams.includes(aAbbr);
+                    if (!isKnown && !isFiltered) return;
 
                     const matchStatus = getMatchStatus(ev);
 
@@ -328,8 +393,8 @@
                         id: ev.id,
                         homeAbbr: hAbbr,
                         awayAbbr: aAbbr,
-                        homeScore: parseInt(home.score || 0),
-                        awayScore: parseInt(away.score || 0),
+                        homeScore: parseInt(home.score || 0, 10),
+                        awayScore: parseInt(away.score || 0, 10),
                         status: matchStatus,
                         minute: ev.status?.displayClock || '',
                         venue: comp.venue?.fullName || 'Estadio',
@@ -342,17 +407,60 @@
                     else upcomingMatches.push(obj);
                 });
 
-                let bestMatch = null;
+                // ─── NUEVO: Aplicar filtros de URL a cada bucket ──────────────────
+                const filteredLive     = liveMatches.filter(matchesFilter);
+                const filteredUpcoming = upcomingMatches.filter(matchesFilter);
+                const filteredFinished = finishedMatches.filter(matchesFilter);
 
-                if (liveMatches.length > 0) {
-                    bestMatch = liveMatches[0];
-                } else if (upcomingMatches.length > 0) {
-                    upcomingMatches.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
-                    bestMatch = upcomingMatches[0];
-                } else if (finishedMatches.length > 0) {
-                    finishedMatches.sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
-                    bestMatch = finishedMatches[0];
+                // Si hay filtros activos, buscar primero en los filtrados
+                // Si no se encuentra nada filtrado, caer al comportamiento original
+                let bestMatch = null;
+                let usedFallback = false;
+
+                const hasFilter = filterHome || filterAway || filterTeam;
+
+                if (hasFilter) {
+                    // Prioridad: en vivo → próximo → finalizado (todos filtrados)
+                    if (filteredLive.length > 0) {
+                        bestMatch = filteredLive[0];
+                    } else if (filteredUpcoming.length > 0) {
+                        filteredUpcoming.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+                        bestMatch = filteredUpcoming[0];
+                    } else if (filteredFinished.length > 0) {
+                        filteredFinished.sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
+                        bestMatch = filteredFinished[0];
+                    }
+
+                    // Fallback: si no se encontró el partido filtrado, usar el comportamiento original
+                    if (!bestMatch) {
+                        usedFallback = true;
+                        if (liveMatches.length > 0) {
+                            bestMatch = liveMatches[0];
+                        } else if (upcomingMatches.length > 0) {
+                            upcomingMatches.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+                            bestMatch = upcomingMatches[0];
+                        } else if (finishedMatches.length > 0) {
+                            finishedMatches.sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
+                            bestMatch = finishedMatches[0];
+                        }
+                    }
+                } else {
+                    // Sin filtros: comportamiento original
+                    if (liveMatches.length > 0) {
+                        bestMatch = liveMatches[0];
+                    } else if (upcomingMatches.length > 0) {
+                        upcomingMatches.sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff));
+                        bestMatch = upcomingMatches[0];
+                    } else if (finishedMatches.length > 0) {
+                        finishedMatches.sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
+                        bestMatch = finishedMatches[0];
+                    }
                 }
+
+                // Mostrar/ocultar el banner de fallback
+                const banner = document.getElementById('no-match-banner');
+                banner.style.display = usedFallback ? 'block' : 'none';
+                // ─────────────────────────────────────────────────────────────────
 
                 if (bestMatch) {
                     updateWidget(bestMatch);
@@ -406,7 +514,7 @@
                 'FIJ':'https://flagcdn.com/w80/fj.png','PNG':'https://flagcdn.com/w80/pg.png','SOL':'https://flagcdn.com/w80/sb.png',
                 'VAN':'https://flagcdn.com/w80/vu.png','NCL':'https://flagcdn.com/w80/nc.png','PYF':'https://flagcdn.com/w80/pf.png',
                 'ASA':'https://flagcdn.com/w80/as.png','SAM':'https://flagcdn.com/w80/ws.png','TON':'https://flagcdn.com/w80/to.png',
-                'COK':'https://flagcdn.com/w80/ck.png', 'NOR':'https://flagcdn.com/w80/no.png'
+                'COK':'https://flagcdn.com/w80/ck.png','NOR':'https://flagcdn.com/w80/no.png'
             };
             
             document.getElementById('home-flag').src = flags[match.homeAbbr] || 'https://flagcdn.com/w80/un.png';
@@ -422,15 +530,13 @@
 
             if (!isNewMatch) {
                 if (newHome !== prevHomeScore) {
-                    const isGoal = newHome > prevHomeScore;
-                    if (isGoal) triggerGoalEffect(homeBox);
+                    if (newHome > prevHomeScore) triggerGoalEffect(homeBox);
                     homeScoreEl.classList.add('score-update');
                     setTimeout(() => homeScoreEl.classList.remove('score-update'), 600);
                 }
                 
                 if (newAway !== prevAwayScore) {
-                    const isGoal = newAway > prevAwayScore;
-                    if (isGoal) triggerGoalEffect(awayBox);
+                    if (newAway > prevAwayScore) triggerGoalEffect(awayBox);
                     awayScoreEl.classList.add('score-update');
                     setTimeout(() => awayScoreEl.classList.remove('score-update'), 600);
                 }
@@ -442,22 +548,24 @@
             prevHomeScore = newHome;
             prevAwayScore = newAway;
 
-            // Estado
             const statusPill = document.getElementById('status-pill');
             const statusText = document.getElementById('status-text');
+            const statusDot  = document.getElementById('status-dot');
 
             if (match.status === 'live') {
                 statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-red-500 text-white text-xs font-extrabold tracking-wider live-blink';
                 statusText.textContent = 'EN VIVO';
+                statusDot.style.backgroundColor = 'white';
             } else if (match.status === 'finished') {
                 statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-emerald-500 text-white text-xs font-extrabold tracking-wider';
                 statusText.textContent = 'FINALIZADO';
+                statusDot.style.backgroundColor = 'white';
             } else {
                 statusPill.className = 'status-pill flex items-center gap-x-1.5 px-4 py-0.5 bg-amber-500 text-black text-xs font-extrabold tracking-wider';
                 statusText.textContent = 'PRÓXIMO';
+                statusDot.style.backgroundColor = '#111111';
             }
 
-            // Tiempo
             const timeText = document.getElementById('time-text');
             const timeEl = document.getElementById('time-pill');
 
@@ -478,11 +586,28 @@
                 timeEl.style.color = '#d1d5db';
             }
 
+            // Fecha de kickoff en el header derecho
+            const kickoffEl = document.getElementById('kickoff-time');
+            if (match.kickoff) {
+                const d = new Date(match.kickoff);
+                kickoffEl.textContent = d.toLocaleDateString('es-CO', {
+                    day: '2-digit', month: 'short', year: 'numeric'
+                }).toUpperCase();
+            } else {
+                kickoffEl.textContent = '—';
+            }
+
             currentMatch = match;
         }
 
         async function init() {
-            console.log('%c[Widget para streams] Mundial 2026 - Hecho por RyukPlay (Completo y Funcional)', 'color:#14b8a6');
+            console.log('%c[Widget para streams] Mundial 2026 - Hecho por RyukPlay', 'color:#14b8a6');
+            
+            // Log de filtros activos para debug
+            if (filterHome || filterAway || filterTeam) {
+                console.log('%c[Filtros URL activos]', 'color:#fbbf24', { home: filterHome || '—', away: filterAway || '—', team: filterTeam || '—' });
+            }
+
             await fetchData();
             setInterval(fetchData, 30000);
         }
