@@ -1,0 +1,812 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Mundial 2026 — RyukPlay</title>
+    <meta name="description" content="Widget en tiempo real para streams del FIFA World Cup 2026. Datos en vivo, filtros por equipo, efectos de gol.">
+    <meta name="author" content="Lina María Montaño Ramírez | RyukPlay">
+    <link rel="icon" type="image/x-icon" href="https://calypsobronte.github.io/images/favicon.ico">
+
+    <meta property="og:title" content="Widget Mundial 2026 — RyukPlay">
+    <meta property="og:description" content="Widget en tiempo real para streams del FIFA World Cup 2026.">
+    <meta property="og:image" content="https://calypsobronte.github.io/images/preview.jpg">
+    <meta property="og:url" content="https://calypsobronte.github.io/widget_mundial_2026/docs.html">
+    <meta property="og:type" content="website">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Roboto+Mono:wght@400;600&display=swap');
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #0a0a0a;
+            --surface: #111111;
+            --surface2: #181818;
+            --border: rgba(255,255,255,0.08);
+            --text: #f1f5f9;
+            --muted: #94a3b8;
+            --emerald: #10b981;
+            --emerald-dim: rgba(16,185,129,0.12);
+            --yellow: #eab308;
+            --yellow-dim: rgba(234,179,8,0.12);
+            --blue: #3b82f6;
+            --blue-dim: rgba(59,130,246,0.12);
+            --radius: 12px;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: 'Inter', system-ui, sans-serif;
+            font-size: 15px;
+            line-height: 1.7;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .site-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 14px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(12px);
+        }
+
+        .site-header .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .site-header .brand-icon {
+            font-size: 20px;
+            color: var(--emerald);
+        }
+
+        .site-header .brand-name {
+            font-size: 13px;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: var(--text);
+        }
+
+        .site-header nav {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .site-header nav a {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .site-header nav a:hover { color: var(--emerald); }
+
+        /* ── Hero ── */
+        .hero {
+            background: linear-gradient(160deg, #0a0a0a 0%, #0d1f17 50%, #0a0a0a 100%);
+            border-bottom: 1px solid var(--border);
+            padding: 64px 24px 48px;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--emerald-dim);
+            border: 1px solid rgba(16,185,129,0.25);
+            color: var(--emerald);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            padding: 5px 14px;
+            border-radius: 9999px;
+            margin-bottom: 20px;
+        }
+
+        .hero h1 {
+            font-size: clamp(28px, 5vw, 48px);
+            font-weight: 900;
+            letter-spacing: -1px;
+            line-height: 1.1;
+            margin-bottom: 16px;
+        }
+
+        .hero h1 span { color: var(--emerald); }
+
+        .hero p {
+            font-size: 16px;
+            color: var(--muted);
+            max-width: 540px;
+            margin: 0 auto 28px;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 22px;
+            border-radius: 9999px;
+            font-size: 13px;
+            font-weight: 700;
+            text-decoration: none;
+            transition: all 0.2s;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary {
+            background: var(--emerald);
+            color: #000;
+        }
+        .btn-primary:hover { background: #059669; }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--text);
+            border: 1px solid var(--border);
+        }
+        .btn-secondary:hover { border-color: var(--emerald); color: var(--emerald); }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 860px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        /* ── Section ── */
+        .section { margin-bottom: 52px; }
+
+        .section-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 20px;
+            font-weight: 800;
+            margin-bottom: 20px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .section-title i {
+            font-size: 18px;
+            color: var(--emerald);
+        }
+
+        /* ── Feature cards ── */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 14px;
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            transition: border-color 0.2s;
+        }
+
+        .feature-card:hover { border-color: rgba(16,185,129,0.3); }
+
+        .feature-card .icon {
+            font-size: 22px;
+            color: var(--emerald);
+            margin-bottom: 10px;
+        }
+
+        .feature-card h3 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .feature-card p {
+            font-size: 13px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            margin-bottom: 16px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+
+        thead tr {
+            background: var(--surface2);
+        }
+
+        th {
+            padding: 10px 16px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            color: var(--muted);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        td {
+            padding: 10px 16px;
+            border-bottom: 1px solid var(--border);
+            color: var(--text);
+        }
+
+        tr:last-child td { border-bottom: none; }
+        tbody tr:hover { background: rgba(255,255,255,0.02); }
+
+        /* ── Code ── */
+        code {
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            background: rgba(255,255,255,0.06);
+            color: var(--emerald);
+            padding: 2px 7px;
+            border-radius: 5px;
+        }
+
+        .code-block {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 13px;
+            color: #a3e635;
+            overflow-x: auto;
+            margin-bottom: 16px;
+            line-height: 1.8;
+            white-space: pre;
+        }
+
+        /* ── Steps ── */
+        .steps { display: flex; flex-direction: column; gap: 14px; }
+
+        .step {
+            display: flex;
+            gap: 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            align-items: flex-start;
+        }
+
+        .step-num {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background: var(--emerald-dim);
+            border: 1px solid rgba(16,185,129,0.3);
+            color: var(--emerald);
+            font-size: 12px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            margin-top: 2px;
+        }
+
+        .step-content h4 {
+            font-size: 14px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .step-content p {
+            font-size: 13px;
+            color: var(--muted);
+        }
+
+        /* ── Priority pills ── */
+        .priority-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .priority-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+        }
+
+        .priority-badge {
+            font-size: 11px;
+            font-weight: 800;
+            padding: 4px 12px;
+            border-radius: 9999px;
+            flex-shrink: 0;
+        }
+
+        .badge-live { background: rgba(239,68,68,0.15); color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+        .badge-next { background: var(--yellow-dim); color: var(--yellow); border: 1px solid rgba(234,179,8,0.3); }
+        .badge-done { background: var(--emerald-dim); color: var(--emerald); border: 1px solid rgba(16,185,129,0.3); }
+        .badge-fall { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,0.3); }
+
+        /* ── Abbr grid ── */
+        .conf-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-bottom: 16px;
+        }
+
+        .conf-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .conf-header {
+            background: var(--surface2);
+            padding: 10px 16px;
+            font-size: 11px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            color: var(--emerald);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .conf-body { padding: 4px 0; }
+
+        .conf-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 7px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+
+        .conf-row:last-child { border-bottom: none; }
+        .conf-row span:last-child { font-family: 'Roboto Mono', monospace; color: var(--emerald); font-weight: 700; font-size: 12px; }
+
+        .quick-codes {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px 20px;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 2;
+            word-break: break-all;
+        }
+
+        .quick-codes span { color: var(--emerald); font-weight: 700; }
+
+        /* ── Info box ── */
+        .info-box {
+            background: var(--emerald-dim);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            font-size: 13px;
+            color: #6ee7b7;
+            margin-bottom: 16px;
+            display: flex;
+            gap: 10px;
+            align-items: flex-start;
+        }
+
+        .info-box i { margin-top: 2px; flex-shrink: 0; }
+
+        /* ── Contact ── */
+        .contact-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+        }
+
+        .contact-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 14px 18px;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.2s;
+        }
+
+        .contact-card:hover { border-color: rgba(16,185,129,0.4); }
+
+        .contact-card i {
+            font-size: 18px;
+            color: var(--emerald);
+            width: 20px;
+            text-align: center;
+        }
+
+        .contact-card span {
+            font-size: 12px;
+            color: var(--muted);
+            display: block;
+        }
+
+        .contact-card strong {
+            font-size: 13px;
+            color: var(--text);
+        }
+
+        /* ── Footer ── */
+        footer {
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            padding: 20px 24px;
+            text-align: center;
+            font-size: 12px;
+            color: var(--muted);
+        }
+
+        footer a { color: var(--emerald); text-decoration: none; }
+
+        /* ── Responsive ── */
+        @media (max-width: 600px) {
+            .site-header nav { display: none; }
+            .hero { padding: 40px 16px 32px; }
+            .container { padding: 32px 16px 60px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header class="site-header">
+        <a href="https://calypsobronte.github.io/" class="brand">
+            <i class="fa-solid fa-tachometer-alt brand-icon"></i>
+            <span class="brand-name">RYUKPLAY</span>
+        </a>
+        <nav>
+            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank">Widget</a>
+            <a href="https://github.com/calypsobronte/widget_mundial_2026" target="_blank">GitHub</a>
+            <a href="https://www.youtube.com/@ryukdeathnotetv" target="_blank">YouTube</a>
+        </nav>
+    </header>
+
+    <!-- Hero -->
+    <section class="hero">
+        <div class="hero-badge">
+            <i class="fa-solid fa-trophy"></i>
+            FIFA WORLD CUP 2026
+        </div>
+        <h1>Widget Mundial 2026<br><span>por RyukPlay</span></h1>
+        <p>Widget en tiempo real para streams. Datos en vivo vía ESPN API · Actualización cada 30 segundos.</p>
+        <div class="hero-actions">
+            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="btn btn-primary">
+                <i class="fa-solid fa-eye"></i> Ver Widget
+            </a>
+            <a href="https://github.com/calypsobronte/widget_mundial_2026" target="_blank" class="btn btn-secondary">
+                <i class="fa-brands fa-github"></i> Ver en GitHub
+            </a>
+        </div>
+    </section>
+
+    <div class="container">
+
+        <!-- Características -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-star"></i> Características
+            </div>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-bolt"></i></div>
+                    <h3>Datos en tiempo real</h3>
+                    <p>Conectado a la API oficial de ESPN. Actualización automática cada 30 segundos.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-filter"></i></div>
+                    <h3>Filtro por equipo</h3>
+                    <p>Elige exactamente qué partido mostrar vía parámetros en la URL cuando hay varios en simultáneo.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-futbol"></i></div>
+                    <h3>Efectos de gol</h3>
+                    <p>Animación de parpadeo y brillo verde al marcar. Estado EN VIVO con pulso.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-palette"></i></div>
+                    <h3>Diseño premium</h3>
+                    <p>Glassmorphism, banderas, marcador, estadio, grupo y minuto actual.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-display"></i></div>
+                    <h3>Listo para OBS</h3>
+                    <p>Optimizado para OBS, Meld Studio y cualquier plataforma de streaming.</p>
+                </div>
+                <div class="feature-card">
+                    <div class="icon"><i class="fa-solid fa-code"></i></div>
+                    <h3>Open Source</h3>
+                    <p>Licencia MIT. Uso libre para streams y contenido personal.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Cómo usarlo -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-box"></i> Cómo usarlo en OBS / Meld Studio
+            </div>
+            <div class="steps">
+                <div class="step">
+                    <div class="step-num">1</div>
+                    <div class="step-content">
+                        <h4>Agregar fuente de navegador</h4>
+                        <p>En OBS clic derecho en Fuentes → Agregar → Navegador</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">2</div>
+                    <div class="step-content">
+                        <h4>Configurar parámetros</h4>
+                        <p>Width: <code>1100</code> · Height: <code>170</code> · FPS: <code>60</code> · Activar "Refresh browser when scene becomes active"</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">3</div>
+                    <div class="step-content">
+                        <h4>Pegar la URL del widget</h4>
+                        <div class="code-block">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html</div>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-num">4</div>
+                    <div class="step-content">
+                        <h4>¡Listo!</h4>
+                        <p>El widget se actualiza solo cada 30 segundos en tiempo real.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Filtro por URL -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-sliders"></i> Filtrar partido por equipo
+            </div>
+            <div class="info-box">
+                <i class="fa-solid fa-circle-info"></i>
+                <span>Cuando hay dos o más partidos en simultáneo puedes elegir cuál mostrar añadiendo parámetros a la URL.</span>
+            </div>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Parámetro</th>
+                            <th>Ejemplo</th>
+                            <th>Qué hace</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>?home=XXX&away=YYY</code></td>
+                            <td><code>?home=COL&away=ARG</code></td>
+                            <td>Muestra ese partido exacto</td>
+                        </tr>
+                        <tr>
+                            <td><code>?team=XXX</code></td>
+                            <td><code>?team=COL</code></td>
+                            <td>Cualquier partido donde juegue ese equipo</td>
+                        </tr>
+                        <tr>
+                            <td><em>sin parámetros</em></td>
+                            <td>URL normal</td>
+                            <td>Auto: muestra el partido más relevante</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ejemplos de URL con filtro:</p>
+            <div class="code-block">...widget_premium_ryukplay.html?home=COL&away=ARG
+...widget_premium_ryukplay.html?home=NZL&away=BEL
+...widget_premium_ryukplay.html?team=COL
+...widget_premium_ryukplay.html?team=ESP</div>
+        </section>
+
+        <!-- Lógica -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-sitemap"></i> Lógica del widget
+            </div>
+            <div class="priority-list">
+                <div class="priority-item">
+                    <span class="priority-badge badge-live">1°</span>
+                    <span>Partido <strong>En Vivo</strong> que coincida con el filtro</span>
+                </div>
+                <div class="priority-item">
+                    <span class="priority-badge badge-next">2°</span>
+                    <span>Próximo partido a jugar que coincida con el filtro</span>
+                </div>
+                <div class="priority-item">
+                    <span class="priority-badge badge-done">3°</span>
+                    <span>Último partido finalizado que coincida con el filtro</span>
+                </div>
+                <div class="priority-item">
+                    <span class="priority-badge badge-fall">Fallback</span>
+                    <span>Si no hay coincidencia → muestra el partido más relevante disponible con aviso</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Abreviaturas -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-earth-americas"></i> Abreviaturas — 48 países
+            </div>
+            <div class="conf-grid">
+
+                <div class="conf-card">
+                    <div class="conf-header">CONMEBOL — Sudamérica</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Argentina</span><span>ARG</span></div>
+                        <div class="conf-row"><span>Brasil</span><span>BRA</span></div>
+                        <div class="conf-row"><span>Colombia</span><span>COL</span></div>
+                        <div class="conf-row"><span>Ecuador</span><span>ECU</span></div>
+                        <div class="conf-row"><span>Paraguay</span><span>PAR</span></div>
+                        <div class="conf-row"><span>Uruguay</span><span>URU</span></div>
+                    </div>
+                </div>
+
+                <div class="conf-card">
+                    <div class="conf-header">CONCACAF — Norte y Centroamérica</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Canadá</span><span>CAN</span></div>
+                        <div class="conf-row"><span>Curaçao</span><span>CUW</span></div>
+                        <div class="conf-row"><span>Haití</span><span>HAI</span></div>
+                        <div class="conf-row"><span>México</span><span>MEX</span></div>
+                        <div class="conf-row"><span>Panamá</span><span>PAN</span></div>
+                        <div class="conf-row"><span>USA</span><span>USA</span></div>
+                    </div>
+                </div>
+
+                <div class="conf-card">
+                    <div class="conf-header">UEFA — Europa (1/2)</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Alemania</span><span>GER</span></div>
+                        <div class="conf-row"><span>Austria</span><span>AUT</span></div>
+                        <div class="conf-row"><span>Bélgica</span><span>BEL</span></div>
+                        <div class="conf-row"><span>Bosnia y Herz.</span><span>BIH</span></div>
+                        <div class="conf-row"><span>Chequia</span><span>CZE</span></div>
+                        <div class="conf-row"><span>Croacia</span><span>CRO</span></div>
+                        <div class="conf-row"><span>Escocia</span><span>SCO</span></div>
+                        <div class="conf-row"><span>España</span><span>ESP</span></div>
+                    </div>
+                </div>
+
+                <div class="conf-card">
+                    <div class="conf-header">UEFA — Europa (2/2)</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Francia</span><span>FRA</span></div>
+                        <div class="conf-row"><span>Inglaterra</span><span>ENG</span></div>
+                        <div class="conf-row"><span>Noruega</span><span>NOR</span></div>
+                        <div class="conf-row"><span>Países Bajos</span><span>NED</span></div>
+                        <div class="conf-row"><span>Portugal</span><span>POR</span></div>
+                        <div class="conf-row"><span>Suecia</span><span>SWE</span></div>
+                        <div class="conf-row"><span>Suiza</span><span>SUI</span></div>
+                        <div class="conf-row"><span>Turquía</span><span>TUR</span></div>
+                    </div>
+                </div>
+
+                <div class="conf-card">
+                    <div class="conf-header">CAF — África</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Algeria</span><span>ALG</span></div>
+                        <div class="conf-row"><span>Cabo Verde</span><span>CPV</span></div>
+                        <div class="conf-row"><span>Camerún</span><span>CMR</span></div>
+                        <div class="conf-row"><span>Costa de Marfil</span><span>CIV</span></div>
+                        <div class="conf-row"><span>Egipto</span><span>EGY</span></div>
+                        <div class="conf-row"><span>Ghana</span><span>GHA</span></div>
+                        <div class="conf-row"><span>Marruecos</span><span>MAR</span></div>
+                        <div class="conf-row"><span>Nigeria</span><span>NGA</span></div>
+                        <div class="conf-row"><span>Rep. Dem. Congo</span><span>COD</span></div>
+                        <div class="conf-row"><span>Senegal</span><span>SEN</span></div>
+                        <div class="conf-row"><span>Sudáfrica</span><span>RSA</span></div>
+                        <div class="conf-row"><span>Túnez</span><span>TUN</span></div>
+                    </div>
+                </div>
+
+                <div class="conf-card">
+                    <div class="conf-header">AFC — Asia · OFC — Oceanía</div>
+                    <div class="conf-body">
+                        <div class="conf-row"><span>Arabia Saudita</span><span>KSA</span></div>
+                        <div class="conf-row"><span>Australia</span><span>AUS</span></div>
+                        <div class="conf-row"><span>Corea del Sur</span><span>KOR</span></div>
+                        <div class="conf-row"><span>Irak</span><span>IRQ</span></div>
+                        <div class="conf-row"><span>Irán</span><span>IRN</span></div>
+                        <div class="conf-row"><span>Japón</span><span>JPN</span></div>
+                        <div class="conf-row"><span>Jordania</span><span>JOR</span></div>
+                        <div class="conf-row"><span>Nueva Zelanda</span><span>NZL</span></div>
+                        <div class="conf-row"><span>Qatar</span><span>QAT</span></div>
+                        <div class="conf-row"><span>Uzbekistán</span><span>UZB</span></div>
+                    </div>
+                </div>
+
+            </div>
+
+            <p style="font-size:13px; color:var(--muted); margin-bottom:10px;">Lista rápida — todos los códigos:</p>
+            <div class="quick-codes">
+                <span>ALG</span> · <span>ARG</span> · <span>AUS</span> · <span>AUT</span> · <span>BEL</span> · <span>BIH</span> · <span>BRA</span> · <span>CAN</span> · <span>CIV</span> · <span>CMR</span> ·
+                <span>COD</span> · <span>COL</span> · <span>CPV</span> · <span>CRO</span> · <span>CUW</span> · <span>CZE</span> · <span>ECU</span> · <span>EGY</span> · <span>ENG</span> · <span>ESP</span> ·
+                <span>FRA</span> · <span>GER</span> · <span>GHA</span> · <span>HAI</span> · <span>IRN</span> · <span>IRQ</span> · <span>JOR</span> · <span>JPN</span> · <span>KOR</span> · <span>KSA</span> ·
+                <span>MAR</span> · <span>MEX</span> · <span>NED</span> · <span>NOR</span> · <span>NZL</span> · <span>PAN</span> · <span>PAR</span> · <span>POR</span> · <span>QAT</span> · <span>RSA</span> ·
+                <span>SCO</span> · <span>SEN</span> · <span>SUI</span> · <span>SWE</span> · <span>TUN</span> · <span>TUR</span> · <span>URU</span> · <span>USA</span> · <span>UZB</span>
+            </div>
+        </section>
+
+        <!-- Contacto -->
+        <section class="section">
+            <div class="section-title">
+                <i class="fa-solid fa-address-card"></i> Contacto
+            </div>
+            <div class="contact-grid">
+                <a href="https://calypsobronte.github.io/" target="_blank" class="contact-card">
+                    <i class="fa-solid fa-globe"></i>
+                    <div><span>Portfolio</span><strong>calypsobronte.github.io</strong></div>
+                </a>
+                <a href="https://github.com/calypsobronte" target="_blank" class="contact-card">
+                    <i class="fa-brands fa-github"></i>
+                    <div><span>GitHub</span><strong>calypsobronte</strong></div>
+                </a>
+                <a href="https://www.youtube.com/@ryukdeathnotetv" target="_blank" class="contact-card">
+                    <i class="fa-brands fa-youtube"></i>
+                    <div><span>YouTube</span><strong>@ryukdeathnotetv</strong></div>
+                </a>
+                <a href="https://linkedin.com/in/calypsobronte" target="_blank" class="contact-card">
+                    <i class="fa-brands fa-linkedin"></i>
+                    <div><span>LinkedIn</span><strong>calypsobronte</strong></div>
+                </a>
+                <a href="mailto:codellinamaria@gmail.com" class="contact-card">
+                    <i class="fa-solid fa-envelope"></i>
+                    <div><span>Email</span><strong>codellinamaria@gmail.com</strong></div>
+                </a>
+            </div>
+        </section>
+
+    </div>
+
+    <footer>
+        Licencia MIT · Uso libre para streams · Créditos a <a href="https://calypsobronte.github.io/" target="_blank">RyukPlay</a> si lo usas públicamente · Datos por <a href="https://www.espn.com/" target="_blank">ESPN API</a>
+        <br><br>Built with ❤️ and a lot of coffee.
+    </footer>
+
+</body>
+</html>
