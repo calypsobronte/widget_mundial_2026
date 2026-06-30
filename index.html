@@ -14,6 +14,7 @@
     <meta property="og:url" content="https://calypsobronte.github.io">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="RyukPlay">
+    <meta http-equiv="refresh" content="300">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
@@ -31,6 +32,50 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+
+        /* ── Bracket de eliminatoria con líneas conectoras ── */
+        .bkt-scroll { overflow-x: auto; padding-bottom: 10px; }
+        .bkt { display: flex; min-width: max-content; }
+        .bkt-round { display: flex; flex-direction: column; width: 232px; flex: 0 0 232px; }
+        .bkt-round:not(:last-child) { padding-right: 46px; }
+        .bkt-title { text-align: center; font-size: 12px; font-weight: 800; letter-spacing: 1.5px;
+                     text-transform: uppercase; color: rgba(255,255,255,.65); padding: 4px 0 12px; white-space: nowrap; }
+        .bkt-col { display: flex; flex-direction: column; flex: 1; }
+        .bkt-match { flex: 1; display: flex; align-items: center; position: relative; min-height: 78px; }
+        .bkt-card { width: 100%; position: relative; background: #26262b; border: 1px solid rgba(255,255,255,.09);
+                    border-radius: 14px; padding: 7px 10px; }
+        .bkt-card.tbd { background: #1f1f24; }
+        .bkt-head { display: flex; align-items: center; justify-content: space-between; font-size: 10px; margin-bottom: 5px; }
+        .bkt-when { color: rgba(255,255,255,.45); white-space: nowrap; }
+        .bkt-tag-live { color: #f87171; font-weight: 700; display: flex; align-items: center; gap: 4px; }
+        .bkt-tag-fin { color: rgba(255,255,255,.5); font-weight: 700; }
+        .bkt-team { display: flex; align-items: center; gap: 8px; padding: 2px 0; }
+        .bkt-team img { width: 20px; height: 14px; object-fit: cover; border-radius: 3px; flex-shrink: 0; }
+        .bkt-shield { width: 20px; text-align: center; color: #52525b; flex-shrink: 0; }
+        .bkt-name { font-size: 13px; color: rgba(255,255,255,.82); font-weight: 500; overflow: hidden;
+                    text-overflow: ellipsis; white-space: nowrap; }
+        .bkt-name.tbd { color: #a1a1aa; }
+        .bkt-name.win { color: #fff; font-weight: 800; }
+        .bkt-score { margin-left: auto; font-size: 13px; font-weight: 800; color: rgba(255,255,255,.55); flex-shrink: 0; }
+        .bkt-score.win { color: #fff; }
+        .bkt-pen { color: #fbbf24; font-weight: 800; }
+        .bkt-arrow { color: #34d399; margin-left: 5px; }
+
+        /* Conectores */
+        .bkt-round:not(:last-child) .bkt-match::after {
+            content: ""; position: absolute; left: 100%; top: 50%; width: 23px; height: 2px; background: rgba(255,255,255,.16); }
+        .bkt-round:not(:last-child) .bkt-match:nth-child(odd)::before {
+            content: ""; position: absolute; left: calc(100% + 23px); top: 50%; height: calc(50% + 1px); width: 2px; background: rgba(255,255,255,.16); }
+        .bkt-round:not(:last-child) .bkt-match:nth-child(even)::before {
+            content: ""; position: absolute; left: calc(100% + 23px); top: 0; height: 50%; width: 2px; background: rgba(255,255,255,.16); }
+        .bkt-round:not(:first-child) .bkt-card::before {
+            content: ""; position: absolute; right: 100%; top: 50%; width: 23px; height: 2px; background: rgba(255,255,255,.16); }
+
+        /* Flechas de navegación */
+        .bkt-nav { width: 34px; height: 34px; border-radius: 999px; background: rgba(255,255,255,.08);
+                   border: 1px solid rgba(255,255,255,.15); color: #fff; cursor: pointer; flex-shrink: 0;
+                   display: flex; align-items: center; justify-content: center; }
+        .bkt-nav:hover { background: rgba(255,255,255,.18); }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
@@ -52,6 +97,11 @@
                     <button onclick="showFinishedMatches()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
                         <i class="fa-solid fa-history fa-sm"></i>
                         <span>Resultados Anteriores</span>
+                    </button>
+
+                    <button onclick="showBracket()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                        <i class="fa-solid fa-sitemap fa-sm"></i>
+                        <span>Eliminatoria</span>
                     </button>
 
                     <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
@@ -85,6 +135,7 @@
         let currentView = 'main';
         const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
         let matchesData = {};
+        let bracketData = {};   // partidos de eliminatoria agrupados por ronda
         let previousData = {};
         let firstLoad = true;
 
@@ -92,14 +143,334 @@
 
         const flags = {'ARG':'https://flagcdn.com/w80/ar.png','BRA':'https://flagcdn.com/w80/br.png','URU':'https://flagcdn.com/w80/uy.png','COL':'https://flagcdn.com/w80/co.png','ECU':'https://flagcdn.com/w80/ec.png','PER':'https://flagcdn.com/w80/pe.png','CHI':'https://flagcdn.com/w80/cl.png','PAR':'https://flagcdn.com/w80/py.png','BOL':'https://flagcdn.com/w80/bo.png','VEN':'https://flagcdn.com/w80/ve.png','FRA':'https://flagcdn.com/w80/fr.png','ENG':'https://flagcdn.com/w80/gb-eng.png','GER':'https://flagcdn.com/w80/de.png','ESP':'https://flagcdn.com/w80/es.png','POR':'https://flagcdn.com/w80/pt.png','NED':'https://flagcdn.com/w80/nl.png','ITA':'https://flagcdn.com/w80/it.png','CRO':'https://flagcdn.com/w80/hr.png','BEL':'https://flagcdn.com/w80/be.png','SRB':'https://flagcdn.com/w80/rs.png','SUI':'https://flagcdn.com/w80/ch.png','AUT':'https://flagcdn.com/w80/at.png','NOR':'https://flagcdn.com/w80/no.png','SWE':'https://flagcdn.com/w80/se.png','DEN':'https://flagcdn.com/w80/dk.png','POL':'https://flagcdn.com/w80/pl.png','UKR':'https://flagcdn.com/w80/ua.png','ROU':'https://flagcdn.com/w80/ro.png','GRE':'https://flagcdn.com/w80/gr.png','TUR':'https://flagcdn.com/w80/tr.png','USA':'https://flagcdn.com/w80/us.png','MEX':'https://flagcdn.com/w80/mx.png','CAN':'https://flagcdn.com/w80/ca.png','CRC':'https://flagcdn.com/w80/cr.png','PAN':'https://flagcdn.com/w80/pa.png','JAM':'https://flagcdn.com/w80/jm.png','HON':'https://flagcdn.com/w80/hn.png','SLV':'https://flagcdn.com/w80/sv.png','TRI':'https://flagcdn.com/w80/tt.png','SEN':'https://flagcdn.com/w80/sn.png','MAR':'https://flagcdn.com/w80/ma.png','EGY':'https://flagcdn.com/w80/eg.png','NGA':'https://flagcdn.com/w80/ng.png','GHA':'https://flagcdn.com/w80/gh.png','CIV':'https://flagcdn.com/w80/ci.png','CMR':'https://flagcdn.com/w80/cm.png','ALG':'https://flagcdn.com/w80/dz.png','RSA':'https://flagcdn.com/w80/za.png','TUN':'https://flagcdn.com/w80/tn.png','MLI':'https://flagcdn.com/w80/ml.png','BFA':'https://flagcdn.com/w80/bf.png','COD':'https://flagcdn.com/w80/cd.png','ZAM':'https://flagcdn.com/w80/zm.png','UGA':'https://flagcdn.com/w80/ug.png','JPN':'https://flagcdn.com/w80/jp.png','KOR':'https://flagcdn.com/w80/kr.png','AUS':'https://flagcdn.com/w80/au.png','IRN':'https://flagcdn.com/w80/ir.png','KSA':'https://flagcdn.com/w80/sa.png','IRQ':'https://flagcdn.com/w80/iq.png','JOR':'https://flagcdn.com/w80/jo.png','UAE':'https://flagcdn.com/w80/ae.png','QAT':'https://flagcdn.com/w80/qa.png','UZB':'https://flagcdn.com/w80/uz.png','VIE':'https://flagcdn.com/w80/vn.png','THA':'https://flagcdn.com/w80/th.png','IDN':'https://flagcdn.com/w80/id.png','NZL':'https://flagcdn.com/w80/nz.png','FIJ':'https://flagcdn.com/w80/fj.png','PNG':'https://flagcdn.com/w80/pg.png'};
 
+        // Nombres completos en español para el bracket (fallback: el código de 3 letras)
+        const NAMES_ES = {
+            'ARG':'Argentina','BRA':'Brasil','URU':'Uruguay','COL':'Colombia','ECU':'Ecuador','PER':'Perú',
+            'CHI':'Chile','PAR':'Paraguay','BOL':'Bolivia','VEN':'Venezuela','FRA':'Francia','ENG':'Inglaterra',
+            'GER':'Alemania','ESP':'España','POR':'Portugal','NED':'Países Bajos','ITA':'Italia','CRO':'Croacia',
+            'BEL':'Bélgica','SRB':'Serbia','SUI':'Suiza','AUT':'Austria','NOR':'Noruega','SWE':'Suecia',
+            'DEN':'Dinamarca','POL':'Polonia','UKR':'Ucrania','ROU':'Rumania','GRE':'Grecia','TUR':'Turquía',
+            'USA':'Estados Unidos','MEX':'México','CAN':'Canadá','CRC':'Costa Rica','PAN':'Panamá','JAM':'Jamaica',
+            'HON':'Honduras','SLV':'El Salvador','TRI':'Trinidad y Tobago','SEN':'Senegal','MAR':'Marruecos',
+            'EGY':'Egipto','NGA':'Nigeria','GHA':'Ghana','CIV':'Costa de Marfil','CMR':'Camerún','ALG':'Argelia',
+            'RSA':'Sudáfrica','TUN':'Túnez','MLI':'Malí','BFA':'Burkina Faso','COD':'RD Congo','ZAM':'Zambia',
+            'UGA':'Uganda','JPN':'Japón','KOR':'Corea del Sur','AUS':'Australia','IRN':'Irán','KSA':'Arabia Saudita',
+            'IRQ':'Irak','JOR':'Jordania','UAE':'Emiratos Árabes','QAT':'Catar','UZB':'Uzbekistán','VIE':'Vietnam',
+            'THA':'Tailandia','IDN':'Indonesia','NZL':'Nueva Zelanda','FIJ':'Fiyi','PNG':'Papúa N. Guinea',
+            'CZE':'Chequia','SCO':'Escocia','HAI':'Haití','CUW':'Curazao','CPV':'Cabo Verde',
+        };
+        function nameES(abbr) { return NAMES_ES[abbr] || abbr; }
+
         function getMatchStatus(ev) {
             const status = ev.status || {};
             const type = status.type || {};
             const name = (type.name || '').toUpperCase();
             const state = (type.state || '').toLowerCase();
-            if (state === 'in' || name.includes('IN_PROGRESS') || name.includes('HALFTIME')) return 'live';
-            if (state === 'post' || name.includes('FULL_TIME') || name.includes('FINAL')) return 'finished';
+            // "completed" / "post" mandan: un partido terminado no debe confundirse
+            // con estados intermedios como prórroga o la tanda de penales.
+            if (type.completed === true || state === 'post') return 'finished';
+            if (state === 'in' ||
+                name.includes('IN_PROGRESS') || name.includes('HALF') ||
+                name.includes('EXTRA')       || name.includes('OVERTIME') ||
+                name.includes('SHOOTOUT')    || name.includes('PENALT')) return 'live';
             return 'upcoming';
+        }
+
+        // ── Helpers de penales y prórroga (replicados del widget) ──
+
+        // ¿El partido se definió (o se está definiendo) por penales?
+        function isShootout(m) {
+            if (m.homeShootout != null || m.awayShootout != null) return true;
+            const s = ((m.statusName || '') + ' ' + (m.statusDetail || '')).toUpperCase();
+            return s.includes('SHOOTOUT') || s.includes('PENALT') || /\bPENS?\b/.test(s);
+        }
+
+        // ¿Hubo (o hay) prórroga? Períodos 3 y 4 son el tiempo extra.
+        function wentToExtraTime(m) {
+            if ((m.period || 0) >= 3) return true;
+            const s = ((m.statusName || '') + ' ' + (m.statusDetail || '')).toUpperCase();
+            return s.includes('EXTRA') || s.includes('OVERTIME') || s.includes('AET');
+        }
+
+        // Etiqueta para partidos finalizados: PEN · AET · FT
+        function finishedLabel(m) {
+            return isShootout(m)      ? 'PEN'
+                 : wentToExtraTime(m) ? 'AET'
+                 : 'FT';
+        }
+
+        // Contenido del badge de minuto en vivo, con el descuento "+N" resaltado.
+        // Ej.: "90+2'" (con el "+2" en ámbar), "PEN" en tanda, "ENT" en el descanso.
+        function liveBadgeInner(m) {
+            if (isShootout(m)) return 'PEN';
+            const raw  = String(m.minute || '').replace(/['′\s]/g, '').toUpperCase();
+            const name = (m.statusName || '').toUpperCase();
+            if (raw === 'HT' || name.includes('HALFTIME')) return 'ENT';
+            const plus = raw.match(/^(\d+)\+(\d+)/);   // "90+2"  →  descuento
+            if (plus) return `${plus[1]}<span class="text-amber-300 font-black">+${plus[2]}</span>'`;
+            const plain = raw.match(/^(\d+)/);         // "67"
+            if (plain) return `${plain[1]}'`;
+            return 'LIVE';
+        }
+
+        // Línea de penales centrada: "PENALES 4 - 3" (ganador en verde si ya terminó).
+        function penaltyHTML(m) {
+            if (m.homeShootout == null && m.awayShootout == null) return '';
+            const h = m.homeShootout != null ? m.homeShootout : 0;
+            const a = m.awayShootout != null ? m.awayShootout : 0;
+            const decided = m.status === 'finished';
+            const hCls = decided && h > a ? 'text-emerald-400' : 'text-white';
+            const aCls = decided && a > h ? 'text-emerald-400' : 'text-white';
+            return `
+                <div class="mt-2 flex items-center justify-center">
+                    <span class="px-3 py-0.5 rounded-full bg-white/5 border border-white/10 text-[11px] font-bold tracking-wider text-white/70 flex items-center gap-x-1">
+                        <i class="fa-solid fa-futbol text-amber-400 mr-0.5"></i>PENALES
+                        <span class="${hCls} font-black ml-1">${h}</span>
+                        <span class="text-white/40">-</span>
+                        <span class="${aCls} font-black">${a}</span>
+                    </span>
+                </div>`;
+        }
+
+        // ── Bracket / Eliminatoria ──────────────────────────────
+
+        // Mapea el nombre de ronda de la API a una clave del bracket.
+        // Devuelve null para fase de grupos u otras rondas no eliminatorias.
+        function roundKey(name) {
+            const s = (name || '').toUpperCase();
+            if (/SEMI/.test(s))                            return 'sf';
+            if (/THIRD|3RD|TERCER/.test(s))                return 'third';
+            if (/QUARTER|CUARTO|1\/4/.test(s))             return 'qf';
+            if (/ROUND OF 16|OCTAVO|1\/8|\b16\b/.test(s))  return 'r16';
+            if (/ROUND OF 32|DIECIS|1\/16|\b32\b/.test(s)) return 'r32';
+            if (/FINAL/.test(s))                           return 'final';
+            return null;
+        }
+
+        // ¿El equipo aún no está definido?
+        function isBracketTBD(abbr, name) {
+            if (!abbr || abbr === '???' || abbr.toUpperCase() === 'TBD') return true;
+            // Códigos reales de selección son 3 letras sin números (COL, BRA, CUW).
+            // Placeholders de eliminatoria suelen llevar dígitos o ser muy cortos (1A, W49).
+            if (/\d/.test(abbr) || abbr.length < 3) return true;
+            const n = (name || '').toUpperCase();
+            return n.includes('TBD') || n.includes('DEFINIR') || n.includes('TO BE') ||
+                   n.includes('WINNER') || n.includes('RUNNER') || n.includes('GANADOR');
+        }
+
+        // Etiqueta corta para partidos finalizados del bracket.
+        function finishedTag(m) {
+            return isShootout(m)      ? 'Fin (P)'
+                 : wentToExtraTime(m) ? 'Fin (Pr)'
+                 : 'Fin';
+        }
+
+        // "Hoy" / "Ayer" / "Mañana" / "Sáb, 4/7" a partir de la fecha.
+        function relativeDay(iso) {
+            if (!iso) return '';
+            const d = new Date(iso), n = new Date();
+            const d0 = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+            const n0 = new Date(n.getFullYear(), n.getMonth(), n.getDate());
+            const diff = Math.round((d0 - n0) / 86400000);
+            if (diff === 0)  return 'Hoy';
+            if (diff === -1) return 'Ayer';
+            if (diff === 1)  return 'Mañana';
+            const wd = d.toLocaleDateString('es-CO', { weekday: 'short' }).replace('.', '');
+            const dm = d.toLocaleDateString('es-CO', { day: 'numeric', month: 'numeric' });
+            return `${wd.charAt(0).toUpperCase() + wd.slice(1)}, ${dm}`;
+        }
+
+        // Fila de un equipo dentro de la tarjeta del bracket.
+        function bracketTeamRow(abbr, isTBD, isWin, showScore, score, pens) {
+            if (isTBD) {
+                return `<div class="bkt-team">
+                    <span class="bkt-shield"><i class="fa-solid fa-shield-halved"></i></span>
+                    <span class="bkt-name tbd">A definir</span></div>`;
+            }
+            const flag = flags[abbr]
+                ? `<img src="${flags[abbr]}">`
+                : `<span class="bkt-shield"><i class="fa-solid fa-shield-halved"></i></span>`;
+            const arrow = isWin ? `<span class="bkt-arrow"><i class="fa-solid fa-caret-left"></i></span>` : '';
+            const sc = showScore
+                ? `<span class="bkt-score ${isWin ? 'win' : ''}">${score}${pens != null ? ` <span class="bkt-pen">(${pens})</span>` : ''}</span>${arrow}`
+                : '';
+            return `<div class="bkt-team">
+                ${flag}
+                <span class="bkt-name ${isWin ? 'win' : ''}">${nameES(abbr)}</span>
+                ${sc}</div>`;
+        }
+
+        // Tarjeta de un partido del bracket. m === null => casilla vacía "A definir".
+        function bracketCard(m) {
+            if (!m) {
+                return `<div class="bkt-card tbd">
+                    ${bracketTeamRow('', true)}
+                    ${bracketTeamRow('', true)}</div>`;
+            }
+            const showScore = m.status === 'finished' || m.status === 'live';
+            const homeTBD = isBracketTBD(m.homeAbbr, m.homeName);
+            const awayTBD = isBracketTBD(m.awayAbbr, m.awayName);
+
+            let homeWin = false, awayWin = false;
+            if (m.status === 'finished') {
+                if (m.homeShootout != null || m.awayShootout != null) {
+                    homeWin = (m.homeShootout || 0) > (m.awayShootout || 0);
+                    awayWin = (m.awayShootout || 0) > (m.homeShootout || 0);
+                } else {
+                    homeWin = m.homeScore > m.awayScore;
+                    awayWin = m.awayScore > m.homeScore;
+                }
+            }
+
+            let right = '';
+            if (m.status === 'live') {
+                right = `<span class="bkt-tag-live"><span class="w-1.5 h-1.5 bg-red-500 rounded-full live-dot"></span>${liveBadgeInner(m)}</span>`;
+            } else if (m.status === 'finished') {
+                right = `<span class="bkt-tag-fin">${finishedTag(m)}</span>`;
+            }
+
+            let left = relativeDay(m.kickoff);
+            if (m.status === 'upcoming' && m.kickoff) {
+                left += `, ${new Date(m.kickoff).toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit', hour12: true })}`;
+            }
+
+            return `<div class="bkt-card">
+                <div class="bkt-head"><span class="bkt-when">${left}</span>${right}</div>
+                ${bracketTeamRow(m.homeAbbr, homeTBD, homeWin, showScore, m.homeScore, m.homeShootout)}
+                ${bracketTeamRow(m.awayAbbr, awayTBD, awayWin, showScore, m.awayScore, m.awayShootout)}</div>`;
+        }
+
+        // Desplaza el bracket horizontalmente con las flechas.
+        function bracketScroll(dir) {
+            const el = document.getElementById('bkt-scroll');
+            if (el) el.scrollBy({ left: dir * 278, behavior: 'smooth' });
+        }
+
+        // Renderiza el bracket con esqueleto fijo (16→8→4→2→1) y líneas conectoras.
+        // Las casillas se rellenan con los datos de la API en orden de fecha; las
+        // que aún no existen se muestran como "A definir".
+
+        // Cuadro oficial 2026 en el orden REAL del bracket (no por fecha).
+        // r32: los 16 cruces tal cual la imagen. Cada par (0-1, 2-3…) alimenta
+        // el octavo de arriba, y así sucesivamente. Fechas en hora de Colombia.
+        const KO = {
+            r32: [
+                { h: 'RSA', a: 'CAN', d: '2026-06-28T19:00:00-05:00' },
+                { h: 'NED', a: 'MAR', d: '2026-06-29T16:00:00-05:00' },
+                { h: 'GER', a: 'PAR', d: '2026-06-29T12:00:00-05:00' },
+                { h: 'FRA', a: 'SWE', d: '2026-06-30T16:00:00-05:00' },
+                { h: 'BEL', a: 'SEN', d: '2026-07-01T15:00:00-05:00' },
+                { h: 'USA', a: 'BIH', d: '2026-07-01T19:00:00-05:00' },
+                { h: 'ESP', a: 'AUT', d: '2026-07-02T14:00:00-05:00' },
+                { h: 'POR', a: 'CRO', d: '2026-07-02T18:00:00-05:00' },
+                { h: 'BRA', a: 'JPN', d: '2026-06-29T19:00:00-05:00' },
+                { h: 'CIV', a: 'NOR', d: '2026-06-30T14:00:00-05:00' },
+                { h: 'MEX', a: 'ECU', d: '2026-06-30T20:00:00-05:00' },
+                { h: 'ENG', a: 'COD', d: '2026-07-01T11:00:00-05:00' },
+                { h: 'SUI', a: 'ALG', d: '2026-07-02T22:00:00-05:00' },
+                { h: 'COL', a: 'GHA', d: '2026-07-03T20:30:00-05:00' },
+                { h: 'AUS', a: 'EGY', d: '2026-07-03T13:00:00-05:00' },
+                { h: 'ARG', a: 'CPV', d: '2026-07-03T17:00:00-05:00' },
+            ],
+            r16: [
+                { d: '2026-07-04T12:00:00-05:00' }, { d: '2026-07-04T16:00:00-05:00' },
+                { d: '2026-07-06T19:00:00-05:00' }, { d: '2026-07-06T14:00:00-05:00' },
+                { d: '2026-07-05T15:00:00-05:00' }, { d: '2026-07-05T19:00:00-05:00' },
+                { d: '2026-07-07T15:00:00-05:00' }, { d: '2026-07-07T11:00:00-05:00' },
+            ],
+            qf: [
+                { d: '2026-07-09T15:00:00-05:00' }, { d: '2026-07-10T14:00:00-05:00' },
+                { d: '2026-07-11T16:00:00-05:00' }, { d: '2026-07-11T20:00:00-05:00' },
+            ],
+            sf: [ { d: '2026-07-14T14:00:00-05:00' }, { d: '2026-07-15T14:00:00-05:00' } ],
+            final: [ { d: '2026-07-19T14:00:00-05:00' } ],
+        };
+
+        // Busca en la lista de la API el partido entre estos dos equipos (en cualquier orden).
+        function findApiMatch(list, a, b) {
+            if (!a || !b) return null;
+            return (list || []).find(m =>
+                (m.homeAbbr === a && m.awayAbbr === b) || (m.homeAbbr === b && m.awayAbbr === a)) || null;
+        }
+
+        // Construye una casilla del bracket combinando el esqueleto (equipos a,b + fecha)
+        // con los datos en vivo de la API, orientando el marcador hacia (a,b).
+        function buildSlot(a, b, date, apiList) {
+            const slot = { homeAbbr: a || '', awayAbbr: b || '', kickoff: date,
+                           status: 'upcoming', homeScore: 0, awayScore: 0,
+                           homeShootout: null, awayShootout: null, minute: '', statusName: '', statusDetail: '' };
+            const m = findApiMatch(apiList, a, b);
+            if (m) {
+                slot.status = m.status; slot.minute = m.minute;
+                slot.statusName = m.statusName; slot.statusDetail = m.statusDetail; slot.period = m.period;
+                slot.kickoff = m.kickoff || date;
+                if (m.homeAbbr === a) {
+                    slot.homeScore = m.homeScore; slot.awayScore = m.awayScore;
+                    slot.homeShootout = m.homeShootout; slot.awayShootout = m.awayShootout;
+                } else {
+                    slot.homeScore = m.awayScore; slot.awayScore = m.homeScore;
+                    slot.homeShootout = m.awayShootout; slot.awayShootout = m.homeShootout;
+                }
+            }
+            return slot;
+        }
+
+        // Devuelve el código del ganador de una casilla, o null si aún no se decide.
+        function slotWinner(slot) {
+            if (slot.status !== 'finished' || !slot.homeAbbr || !slot.awayAbbr) return null;
+            if (slot.homeShootout != null || slot.awayShootout != null)
+                return (slot.homeShootout || 0) >= (slot.awayShootout || 0) ? slot.homeAbbr : slot.awayAbbr;
+            if (slot.homeScore === slot.awayScore) return null;
+            return slot.homeScore > slot.awayScore ? slot.homeAbbr : slot.awayAbbr;
+        }
+
+        // Renderiza el bracket en el ORDEN OFICIAL, con líneas conectoras.
+        // Los ganadores se propagan solos a la ronda siguiente.
+        function showBracket() {
+            currentView = 'bracket';
+            const container = document.getElementById('matches-container');
+
+            const r32 = KO.r32.map(s => buildSlot(s.h, s.a, s.d, bracketData.r32));
+            const w32 = r32.map(slotWinner);
+            const r16 = KO.r16.map((s, i) => buildSlot(w32[2*i], w32[2*i+1], s.d, bracketData.r16));
+            const w16 = r16.map(slotWinner);
+            const qf  = KO.qf.map((s, i) => buildSlot(w16[2*i], w16[2*i+1], s.d, bracketData.qf));
+            const wqf = qf.map(slotWinner);
+            const sf  = KO.sf.map((s, i) => buildSlot(wqf[2*i], wqf[2*i+1], s.d, bracketData.sf));
+            const wsf = sf.map(slotWinner);
+            const fin = KO.final.map((s, i) => buildSlot(wsf[2*i], wsf[2*i+1], s.d, bracketData.final));
+
+            const rounds = [
+                { label: 'Eliminatoria de 32', slots: r32 },
+                { label: 'Octavos de final',   slots: r16 },
+                { label: 'Cuartos de final',   slots: qf },
+                { label: 'Semifinales',        slots: sf },
+                { label: 'Final',              slots: fin },
+            ];
+
+            let cols = '';
+            for (const r of rounds) {
+                let matches = '';
+                for (const slot of r.slots) {
+                    matches += `<div class="bkt-match">${bracketCard(slot)}</div>`;
+                }
+                cols += `<div class="bkt-round">
+                    <div class="bkt-title">${r.label}</div>
+                    <div class="bkt-col">${matches}</div>
+                </div>`;
+            }
+
+            container.innerHTML = `
+                <div class="flex items-center justify-between mb-4">
+                    <div class="text-emerald-400 font-bold text-lg flex items-center gap-x-2">
+                        <i class="fa-solid fa-sitemap"></i><span>ELIMINATORIA</span>
+                    </div>
+                    <div class="flex items-center gap-x-2">
+                        <button class="bkt-nav" onclick="bracketScroll(-1)"><i class="fa-solid fa-chevron-left fa-sm"></i></button>
+                        <button class="bkt-nav" onclick="bracketScroll(1)"><i class="fa-solid fa-chevron-right fa-sm"></i></button>
+                    </div>
+                </div>
+                <div id="bkt-scroll" class="bkt-scroll"><div class="bkt">${cols}</div></div>`;
         }
 
         function manualRefresh() {
@@ -131,6 +502,7 @@
 
                 // previousData = { ...matchesData };
                 matchesData = {};
+                bracketData = { r32: [], r16: [], qf: [], sf: [], third: [], final: [] };
 
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -154,6 +526,31 @@
                     const hAbbr = home.team?.abbreviation || '???';
                     const aAbbr = away.team?.abbreviation || '???';
 
+                    // ── Bracket: capturar TODOS los partidos de eliminatoria ──
+                    // (sin el filtro de relevantTeams, para incluir los "A definir")
+                    // ESPN NO trae comp.round. La ronda está en ev.season.slug
+                    // ("group-stage", "round-of-16"…) y en comp.altGameNote
+                    // ("FIFA World Cup, Round of 16"). Usamos ambos.
+                    const stageStr = ((ev.season?.slug || '') + ' ' + (comp.altGameNote || '')).replace(/[-_]/g, ' ');
+                    const rk = roundKey(stageStr);
+                    if (rk) {
+                        const bhS = home.shootoutScore, baS = away.shootoutScore;
+                        bracketData[rk].push({
+                            homeAbbr: hAbbr, awayAbbr: aAbbr,
+                            homeName: home.team?.displayName || home.team?.shortDisplayName || '',
+                            awayName: away.team?.displayName || away.team?.shortDisplayName || '',
+                            homeScore: parseInt(home.score || 0), awayScore: parseInt(away.score || 0),
+                            homeShootout: (bhS === 0 || bhS) ? parseInt(bhS, 10) : null,
+                            awayShootout: (baS === 0 || baS) ? parseInt(baS, 10) : null,
+                            status: getMatchStatus(ev),
+                            minute: ev.status?.displayClock || '',
+                            period: ev.status?.period || 1,
+                            statusName: (ev.status?.type?.name || '').toUpperCase(),
+                            statusDetail: ev.status?.type?.shortDetail || ev.status?.type?.detail || '',
+                            kickoff: ev.date,
+                        });
+                    }
+
                     if (!relevantTeams.includes(hAbbr) && !relevantTeams.includes(aAbbr)) return;
 
                     const status = getMatchStatus(ev);
@@ -162,15 +559,24 @@
                     const kickoffTime = new Date(ev.date);
                     const scheduledTime = kickoffTime.toLocaleTimeString('es-CO', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+                    // Penales: ESPN expone el resultado de la tanda en competitor.shootoutScore
+                    const hShoot = home.shootoutScore;
+                    const aShoot = away.shootoutScore;
+
                     matchesData[matchId] = {
                         homeAbbr: hAbbr,
                         awayAbbr: aAbbr,
                         homeScore: parseInt(home.score || 0),
                         awayScore: parseInt(away.score || 0),
+                        homeShootout: (hShoot === 0 || hShoot) ? parseInt(hShoot, 10) : null,
+                        awayShootout: (aShoot === 0 || aShoot) ? parseInt(aShoot, 10) : null,
                         status: status,
                         minute: ev.status?.displayClock || '',
+                        period: ev.status?.period || 1,
+                        statusName: (ev.status?.type?.name || '').toUpperCase(),
+                        statusDetail: ev.status?.type?.shortDetail || ev.status?.type?.detail || '',
                         venue: comp.venue?.fullName || 'Estadio',
-                        group: comp.round?.displayName || comp.round?.name || 'GROUP-STAGE',
+                        group: ((comp.altGameNote || '').split(',').pop() || '').trim() || 'Fase de grupos',
                         kickoff: ev.date,
                         scheduledTime: scheduledTime,
                         live: status === 'live'
@@ -179,7 +585,11 @@
                     if (matchDate.getTime() === today.getTime()) todayEvents.push(matchId);
                     else if (matchDate.getTime() === tomorrow.getTime()) tomorrowEvents.push(matchId);
                 });
-                
+
+                // Ordenar cada ronda del bracket por fecha (de arriba hacia abajo)
+                Object.keys(bracketData).forEach(k =>
+                    bracketData[k].sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff)));
+
                 if (currentView === 'main') {
                     //if (Object.keys(previousData).length === 0) {
                     if (firstLoad) {
@@ -188,6 +598,10 @@
                     } else {
                         updateMatchesUI(todayEvents, tomorrowEvents);
                     }
+                } else if (currentView === 'finished') {
+                    showFinishedMatches();
+                } else if (currentView === 'bracket') {
+                    showBracket();
                 }
                 //previousData = { ...matchesData };
 
@@ -242,6 +656,8 @@
                 } else if (oldData && (
                     oldData.homeScore !== newData.homeScore ||
                     oldData.awayScore !== newData.awayScore ||
+                    oldData.homeShootout !== newData.homeShootout ||
+                    oldData.awayShootout !== newData.awayShootout ||
                     oldData.status !== newData.status ||
                     oldData.minute !== newData.minute
                 )) {
@@ -266,9 +682,9 @@
 
             let timeDisplay = '';
             if (data.status === 'live') {
-                timeDisplay = `<div class="bg-red-500 text-white font-mono font-extrabold text-sm px-4 py-1.5 rounded-r-3xl flex items-center justify-center min-w-[70px]"><span>${data.minute || "LIVE"}</span></div>`;
+                timeDisplay = `<div class="bg-red-500 text-white font-mono font-extrabold text-sm px-4 py-1.5 rounded-r-3xl flex items-center justify-center min-w-[70px]"><span>${liveBadgeInner(data)}</span></div>`;
             } else if (data.status === 'finished') {
-                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-5 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]">FT</div>`;
+                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-5 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]">${finishedLabel(data)}</div>`;
             } else {
                 timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-4 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]"><span>${data.scheduledTime}</span></div>`;
             }
@@ -311,6 +727,8 @@
                         ${timeDisplay}
                     </div>
 
+                    ${penaltyHTML(data)}
+
                     <div class="mt-1.5 text-xs text-white/50 flex items-center gap-x-1.5 px-1">
                         <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
                         <span>${data.venue}</span>
@@ -324,7 +742,9 @@
             currentView = 'finished';
             const container = document.getElementById('matches-container');
             container.innerHTML = '';
-            const finished = Object.values(matchesData).filter(m => m.status === 'finished');
+            const finished = Object.values(matchesData)
+                .filter(m => m.status === 'finished')
+                .sort((a, b) => new Date(b.kickoff) - new Date(a.kickoff));
 
             if (finished.length === 0) {
                 container.innerHTML = `<div class="text-center py-10 text-white/60">No hay partidos finalizados aún.</div>`;
@@ -351,7 +771,9 @@
                     <div class="text-xs text-emerald-400 font-bold">${data.group}</div>
                     <div class="px-3 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-2xl flex items-center gap-x-1.5">
                         <i class="fa-solid fa-check-double fa-xs"></i>
-                        <span>Fin del partido</span>
+                        <span>${finishedLabel(data) === 'PEN' ? 'Ganó en penales'
+                              : finishedLabel(data) === 'AET' ? 'Tras la prórroga'
+                              : 'Fin del partido'}</span>
                     </div>
                 </div>
 
@@ -372,6 +794,8 @@
                         <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
                     </div>
                 </div>
+
+                ${penaltyHTML(data)}
 
                 <div class="mt-2 text-xs text-white/50 flex items-center gap-x-1.5">
                     <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
