@@ -171,6 +171,7 @@
             align-items: center;
         }
         .score-box {
+            position: relative;
             background: #2a2a2e;
             width: 80px; height: 64px;
             border-radius: 16px;
@@ -180,6 +181,41 @@
             font-size: 40px;
             font-weight: 900;
             color: #f7f7f8;
+        }
+
+        /* Marcador de la tanda de penales — pastilla sobre la esquina del score */
+        .pen-badge {
+            position: absolute;
+            top: -10px;
+            right: -10px;
+            min-width: 26px;
+            height: 50px;
+            padding: 0 6px;
+            border-radius: 13px;
+            background: #2a2a2e;
+            color: #f7f7f8;
+            border: 2px solid #ffffff;
+            font-size: 20px;
+            font-weight: 900;
+            line-height: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+        }
+        .pen-badge.left { left: -10px; right: auto; }
+        .pen-badge.win  { background: #03884d; color: #fff; }
+        /* "(P)" pequeño bajo el badge para dejar claro que es penales */
+        .pen-badge::after {
+            content: 'P';
+            position: absolute;
+            bottom: -13px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 8px;
+            font-weight: 900;
+            color: rgba(255,255,255,.55);
+            letter-spacing: .05em;
         }
 
         /* Animación de gol */
@@ -222,14 +258,14 @@
 
         /* Hora grande — fondo blanco, números negros, igual que en la imagen */
         .time {
-            font-size: 55px;
+            font-size: 48px;
             font-weight: 900;
             color: #111111;
             white-space: nowrap;
             text-align: center;
             background: #ffffff;
             border-radius: 20px;
-            padding: 0 28px;
+            padding: 0 24px;
             align-self: stretch;
             display: flex;
             align-items: center;
@@ -237,6 +273,19 @@
             flex-shrink: 0;
         }
         .time.live { color: #111111; }
+
+        /* Tiempo añadido (descuento) — el "+5" / "+2" resaltado en rojo */
+        .time .added {
+            color: #d40100;
+            font-weight: 900;
+            margin-left: 2px;
+        }
+        /* Segundos del descuento, más pequeños y atenuados */
+        .time .secs {
+            font-size: 0.6em;
+            color: #6b6b70;
+            margin-left: 3px;
+        }
 
         /* Banner fallback */
         .no-match-banner {
@@ -284,6 +333,7 @@
                 <div class="score-wrap">
                     <div id="home-score-box" class="score-box">
                         <span id="home-score">-</span>
+                        <span id="home-pens" class="pen-badge" style="display:none;"></span>
                     </div>
                 </div>
 
@@ -311,6 +361,7 @@
                 <div class="score-wrap">
                     <div id="away-score-box" class="score-box">
                         <span id="away-score">-</span>
+                        <span id="away-pens" class="pen-badge left" style="display:none;"></span>
                     </div>
                 </div>
 
@@ -363,21 +414,28 @@
     let prevHomeScore = null;
     let prevAwayScore = null;
 
-    // ── Contador en vivo MM:SS ──────────────────────────────
+    // ── Contador en vivo MM:SS (con soporte robusto de tiempo añadido) ──
     let liveTimerInterval = null;
     let liveStartMs       = null;
     let liveBaseSeconds   = 0;
     let liveLastMinuteStr = '';
-    let liveRegularMinute = 0;  // 45 o 90 — el minuto base del período
+    let livePeriod        = 1;  // período actual (1=1ºT, 2=2ºT, 3/4=prórroga)
 
-    function startLiveTimer(minuteStr) {
-        liveBaseSeconds   = parseMinuteToSeconds(minuteStr);
+    function periodLimit(period) {
+        switch (period) {
+            case 1: return 45;
+            case 2: return 90;
+            case 3: return 105;
+            case 4: return 120;
+            default: return 90;
+        }
+    }
+
+    function startLiveTimer(minuteStr, period) {
+        liveBaseSeconds   = parseMinuteToSeconds(minuteStr, period);
         liveStartMs       = Date.now();
         liveLastMinuteStr = minuteStr;
-
-        // Detectar si hay tiempo adicional: "90+2:00" → base=90, "45+1" → base=45
-        const extraMatch = minuteStr.match(/^(\d+)\+/);
-        liveRegularMinute = extraMatch ? parseInt(extraMatch[1]) : 0;
+        livePeriod        = period;
 
         if (liveTimerInterval) clearInterval(liveTimerInterval);
         function tick() {
@@ -386,12 +444,20 @@
             const el      = document.getElementById('time-display');
             if (!el) return;
 
-            if (liveRegularMinute > 0) {
-                // Tiempo adicional: mostrar "90+3:05"
-                const extraTotal = total - (liveRegularMinute * 60);
+            // Límite reglamentario del período: 45 (1ºT), 90 (2ºT), 105 / 120 (prórroga).
+            // En cuanto el reloj pasa ese límite, mostramos el descuento como "+N",
+            // así NUNCA se ve 46:00, 91:00, 100:00… sino 45+1, 90+2, etc.
+            const limit = periodLimit(livePeriod);
+
+            if (total > limit * 60) {
+                // Tiempo adicional: minuto base (45/90/105/120) + el "+N" resaltado + segundos pequeños
+                // Ej.: 90 +2 :40  →  "90" negro · "+2" rojo · ":40" pequeño gris
+                const extraTotal = total - (limit * 60);
                 const extraMM    = Math.floor(extraTotal / 60);
                 const extraSS    = extraTotal % 60;
-                el.textContent = liveRegularMinute + '+' + String(extraMM).padStart(2,'0') + ':' + String(extraSS).padStart(2,'0');
+                el.innerHTML = limit
+                    + '<span class="added">+' + extraMM + '</span>'
+                    + '<span class="secs">:' + String(extraSS).padStart(2,'0') + '</span>';
             } else {
                 // Tiempo normal: "45:32"
                 el.textContent = String(Math.floor(total/60)).padStart(2,'0') + ':' + String(total%60).padStart(2,'0');
@@ -404,20 +470,31 @@
 
     function stopLiveTimer() {
         if (liveTimerInterval) { clearInterval(liveTimerInterval); liveTimerInterval = null; }
-        liveStartMs = null; liveBaseSeconds = 0; liveLastMinuteStr = ''; liveRegularMinute = 0;
+        liveStartMs = null; liveBaseSeconds = 0; liveLastMinuteStr = ''; livePeriod = 1;
     }
 
-    // Soporta: "90+2:00", "90+2", "45:30", "45'", "HT"
-    function parseMinuteToSeconds(str) {
-        if (!str || str === 'HT') return 45 * 60;
-        const m1 = str.match(/^(\d+)\+(\d+):(\d+)/);
+    // Convierte el clock de ESPN a segundos totales transcurridos en el partido.
+    // Soporta: "90+2:00", "90+2", "45:30", "45'", "HT", o minuto plano sin "+"
+    // que ya superó el límite del período (descuento implícito).
+    function parseMinuteToSeconds(str, period) {
+        // ESPN manda el reloj como "45'", "90'+2'", "HT"… Quitamos apóstrofos
+        // y espacios para que el "+" del descuento se detecte correctamente.
+        const clean = String(str || '').replace(/['′\s]/g, '').toUpperCase();
+        if (clean === 'HT') return periodLimit(1) * 60;
+        if (clean === '' || clean === 'FT' || clean === 'PEN') return periodLimit(period) * 60;
+
+        const m1 = clean.match(/^(\d+)\+(\d+):(\d+)/);
         if (m1) return (parseInt(m1[1]) + parseInt(m1[2])) * 60 + parseInt(m1[3]);
-        const m2 = str.match(/^(\d+)\+(\d+)/);
+
+        const m2 = clean.match(/^(\d+)\+(\d+)/);
         if (m2) return (parseInt(m2[1]) + parseInt(m2[2])) * 60;
-        const m3 = str.match(/^(\d+):(\d+)/);
+
+        const m3 = clean.match(/^(\d+):(\d+)/);
         if (m3) return parseInt(m3[1]) * 60 + parseInt(m3[2]);
-        const m4 = str.match(/^(\d+)/);
+
+        const m4 = clean.match(/^(\d+)/);
         if (m4) return parseInt(m4[1]) * 60;
+
         return 0;
     }
 
@@ -442,9 +519,30 @@
         const type  = ev.status?.type || {};
         const name  = (type.name  || '').toUpperCase();
         const state = (type.state || '').toLowerCase();
-        if (state === 'in'   || name.includes('IN_PROGRESS') || name.includes('HALFTIME')) return 'live';
-        if (state === 'post' || name.includes('FULL_TIME')   || name.includes('FINAL'))    return 'finished';
+        // "completed" es el booleano fiable de ESPN para un partido terminado.
+        // Lo priorizamos sobre el nombre para no confundir estados intermedios
+        // como fin de regulación, descanso de la prórroga o la tanda de penales.
+        if (type.completed === true || state === 'post') return 'finished';
+        if (state === 'in' ||
+            name.includes('IN_PROGRESS') || name.includes('HALF') ||
+            name.includes('EXTRA')       || name.includes('OVERTIME') ||
+            name.includes('SHOOTOUT')    || name.includes('PENALT')) return 'live';
         return 'upcoming';
+    }
+
+    // ¿El partido se definió (o se está definiendo) en la tanda de penales?
+    function isShootout(m) {
+        if (m.homeShootout != null || m.awayShootout != null) return true;
+        const s = (m.statusName + ' ' + m.statusDetail).toUpperCase();
+        return s.includes('SHOOTOUT') || s.includes('PENALT') || /\bPENS?\b/.test(s);
+    }
+
+    // ¿Hubo (o hay) tiempo extra / prórroga? Períodos 3 y 4 son la prórroga;
+    // el 5 suele ser la tanda. También lo deducimos del nombre del estado.
+    function wentToExtraTime(m) {
+        if (m.period >= 3) return true;
+        const s = (m.statusName + ' ' + m.statusDetail).toUpperCase();
+        return s.includes('EXTRA') || s.includes('OVERTIME') || s.includes('AET');
     }
 
     function triggerGoalEffect(scoreBoxEl) {
@@ -517,17 +615,64 @@
         prevHomeScore = newHome;
         prevAwayScore = newAway;
 
+        // ── Penales: pintar el marcador de la tanda en las pastillas ──
+        const homePensEl = document.getElementById('home-pens');
+        const awayPensEl = document.getElementById('away-pens');
+        if (match.status !== 'upcoming' &&
+            (match.homeShootout != null || match.awayShootout != null)) {
+            const hp = match.homeShootout != null ? match.homeShootout : 0;
+            const ap = match.awayShootout != null ? match.awayShootout : 0;
+            homePensEl.textContent = hp;
+            awayPensEl.textContent = ap;
+            homePensEl.style.display = 'flex';
+            awayPensEl.style.display = 'flex';
+            // El verde (ganador) solo cuando la tanda YA terminó. En vivo se
+            // muestra el conteo en neutro para no "coronar" a nadie antes de tiempo.
+            const decided = match.status === 'finished';
+            homePensEl.classList.toggle('win', decided && hp > ap);
+            awayPensEl.classList.toggle('win', decided && ap > hp);
+        } else {
+            homePensEl.style.display = 'none';
+            awayPensEl.style.display = 'none';
+            homePensEl.classList.remove('win');
+            awayPensEl.classList.remove('win');
+        }
+
         // Badges — todos visibles, activo resaltado
         setBadge(match.status);
 
         // Hora / contador
         const timeEl = document.getElementById('time-display');
         if (match.status === 'live') {
-            const newMinute = match.minute || '0:00';
-            if (isNewMatch || newMinute !== liveLastMinuteStr) startLiveTimer(newMinute);
+            if (isShootout(match)) {
+                // Tanda de penales en vivo: no corre el reloj de minutos.
+                stopLiveTimer();
+                timeEl.textContent = 'PEN';
+                timeEl.className   = 'time live';
+            } else {
+                const newMinute = match.minute || '0:00';
+                const newPeriod = match.period || 1;
+                const periodChanged = isNewMatch || newPeriod !== liveLastPeriod;
+                // Reiniciar el contador si es partido nuevo, cambió el período,
+                // o el clock de ESPN se "saltó" hacia atrás/adelante de forma inesperada
+                // (ej. al entrar/salir de tiempo añadido) más de un margen razonable.
+                const expectedSeconds = liveStartMs
+                    ? liveBaseSeconds + Math.floor((Date.now() - liveStartMs) / 1000)
+                    : null;
+                const reportedSeconds = parseMinuteToSeconds(newMinute, newPeriod);
+                const driftTooBig = expectedSeconds !== null && Math.abs(reportedSeconds - expectedSeconds) > 90;
+
+                if (periodChanged || driftTooBig || !liveTimerInterval) {
+                    startLiveTimer(newMinute, newPeriod);
+                }
+                liveLastPeriod = newPeriod;
+            }
         } else if (match.status === 'finished') {
             stopLiveTimer();
-            timeEl.textContent = 'FT';
+            // FT normal · AET tras la prórroga · PEN si se definió por penales.
+            timeEl.textContent = isShootout(match)      ? 'PEN'
+                               : wentToExtraTime(match) ? 'AET'
+                               : 'FT';
             timeEl.className   = 'time';
         } else {
             stopLiveTimer();
@@ -539,6 +684,8 @@
 
         currentMatch = match;
     }
+
+    let liveLastPeriod = null;
 
     async function fetchData() {
         try {
@@ -562,12 +709,24 @@
                 const aA = (away.team?.abbreviation || '???').toUpperCase();
                 if (!knownTeams.has(hA) && !knownTeams.has(aA)) return;
                 const s = getMatchStatus(ev);
+                const hShoot = home.shootoutScore;
+                const aShoot = away.shootoutScore;
                 const obj = {
                     id: ev.id, homeAbbr: hA, awayAbbr: aA,
                     homeScore: parseInt(home.score ?? 0, 10),
                     awayScore: parseInt(away.score ?? 0, 10),
-                    status: s, minute: ev.status?.displayClock || '',
-                    venue:   comp.venue?.fullName || 'Estadio',
+                    // Penales: ESPN expone el resultado de la tanda en
+                    // competitor.shootoutScore (un número, hermano de "score").
+                    homeShootout: (hShoot === 0 || hShoot) ? parseInt(hShoot, 10) : null,
+                    awayShootout: (aShoot === 0 || aShoot) ? parseInt(aShoot, 10) : null,
+                    homeWinner: home.winner === true,
+                    awayWinner: away.winner === true,
+                    status: s,
+                    statusName:   (ev.status?.type?.name || '').toUpperCase(),
+                    statusDetail: ev.status?.type?.shortDetail || ev.status?.type?.detail || '',
+                    minute: ev.status?.displayClock || '',
+                    period: ev.status?.period || 1,
+                    venue:   comp.venue?.fullName || 'Stadium',
                     group:   comp.round?.displayName || comp.round?.name || 'GROUP-STAGE',
                     kickoff: ev.date || null,
                 };
