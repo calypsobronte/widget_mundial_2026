@@ -11,7 +11,7 @@
     <meta property="og:title" content="Widget Mundial 2026 — RyukPlay">
     <meta property="og:description" content="Widget en tiempo real para streams del FIFA World Cup 2026.">
     <meta property="og:image" content="https://calypsobronte.github.io/images/preview.jpg">
-    <meta property="og:url" content="https://calypsobronte.github.io/widget_mundial_2026/docs.html">
+    <meta property="og:url" content="https://calypsobronte.github.io/widget_mundial_2026/docs">
     <meta property="og:type" content="website">
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -169,6 +169,21 @@
         }
         .btn-secondary:hover { border-color: var(--emerald); color: var(--emerald); }
 
+        .btn-donate {
+            background: var(--yellow);
+            color: #1a1206;
+        }
+        .btn-donate:hover { background: #ca9a04; }
+
+        .site-header nav a.nav-donate {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            color: var(--yellow);
+            font-weight: 700;
+        }
+        .site-header nav a.nav-donate:hover { color: #facc15; }
+
         /* ── Layout ── */
         .container {
             max-width: 860px;
@@ -292,6 +307,155 @@
             white-space: pre;
         }
 
+        /* ── Copy field (URL + botón copiar) ── */
+        .copy-field {
+            display: flex;
+            align-items: stretch;
+            gap: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 6px 6px 6px 16px;
+            margin-bottom: 10px;
+        }
+
+        .copy-field .copy-url {
+            flex: 1;
+            min-width: 0;
+            align-self: center;
+            font-family: 'Roboto Mono', monospace;
+            font-size: 12.5px;
+            color: var(--text);
+            overflow-x: auto;
+            white-space: nowrap;
+            padding: 6px 0;
+            scrollbar-width: none;
+        }
+        .copy-field .copy-url::-webkit-scrollbar { display: none; }
+
+        .copy-btn {
+            flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: var(--emerald);
+            color: #04150e;
+            border: none;
+            border-radius: 8px;
+            padding: 0 16px;
+            font-family: 'Inter', sans-serif;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+        }
+        .copy-btn:hover { background: #059669; }
+        .copy-btn:active { transform: scale(0.97); }
+        .copy-btn:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+        .copy-btn.done { background: var(--surface2); color: var(--emerald); }
+
+        /* ── Setup card (Ayuda para configurar tu stream) ── */
+        .setup-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 28px 26px;
+        }
+        .setup-eyebrow {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--emerald);
+            margin-bottom: 10px;
+        }
+        .setup-eyebrow::before {
+            content: "";
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--emerald);
+            box-shadow: 0 0 10px var(--emerald);
+        }
+        .setup-title {
+            font-size: 26px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            line-height: 1.15;
+            margin-bottom: 26px;
+        }
+        .setup-steps { list-style: none; }
+        .setup-step {
+            display: flex;
+            gap: 16px;
+            position: relative;
+            padding-bottom: 24px;
+        }
+        .setup-step:last-child { padding-bottom: 0; }
+        .setup-step:not(:last-child)::before {
+            content: "";
+            position: absolute;
+            left: 17px;
+            top: 36px;
+            bottom: -2px;
+            width: 2px;
+            background: linear-gradient(var(--emerald), transparent);
+        }
+        .setup-num {
+            flex-shrink: 0;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: var(--emerald-dim);
+            border: 1.5px solid var(--emerald);
+            color: var(--emerald);
+            font-weight: 800;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            z-index: 1;
+        }
+        .setup-body {
+            flex: 1;
+            min-width: 0;
+            padding-top: 4px;
+        }
+        .setup-body h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+        .setup-body p {
+            font-size: 13.5px;
+            color: var(--muted);
+            line-height: 1.5;
+        }
+        .setup-body .url-label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            color: var(--muted);
+            margin: 14px 0 7px;
+        }
+        .setup-note {
+            margin-top: 14px;
+            font-size: 12.5px;
+            color: var(--muted);
+            display: flex;
+            gap: 8px;
+            align-items: flex-start;
+            line-height: 1.5;
+        }
+        .setup-note i { margin-top: 2px; color: var(--emerald); flex-shrink: 0; }
+        .setup-note strong { color: var(--text); }
+
         /* ── Steps ── */
         .steps { display: flex; flex-direction: column; gap: 14px; }
 
@@ -320,6 +484,8 @@
             flex-shrink: 0;
             margin-top: 2px;
         }
+
+        .step-content { flex: 1; min-width: 0; }
 
         .step-content h4 {
             font-size: 14px;
@@ -485,6 +651,12 @@
             .hero { padding: 40px 16px 32px; }
             .container { padding: 32px 16px 60px; }
         }
+        @media (max-width: 500px) {
+            .copy-field { flex-direction: column; padding: 12px; }
+            .copy-field .copy-url { white-space: normal; word-break: break-all; }
+            .copy-btn { padding: 10px; justify-content: center; }
+        }
+        @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
     </style>
 </head>
 <body>
@@ -496,9 +668,10 @@
             <span class="brand-name">RYUKPLAY</span>
         </a>
         <nav>
-            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank">Widget</a>
-            <a href="https://github.com/calypsobronte/widget_mundial_2026" target="_blank">GitHub</a>
+            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay" target="_blank">Widget</a>
+            <a href="https://calypsobronte.github.io/" target="_blank">Portafolio</a>
             <a href="https://www.youtube.com/@ryukdeathnotetv" target="_blank">YouTube</a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=8VWL34NBJTTHJ" target="_blank" class="nav-donate"><i class="fa-solid fa-heart"></i> Donar</a>
         </nav>
     </header>
 
@@ -511,11 +684,14 @@
         <h1>Widget Mundial 2026<br><span>por RyukPlay</span></h1>
         <p>Widget en tiempo real para streams. Datos en vivo vía ESPN API · Actualización cada 30 segundos.</p>
         <div class="hero-actions">
-            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="btn btn-primary">
+            <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay" target="_blank" class="btn btn-primary">
                 <i class="fa-solid fa-eye"></i> Ver Widget
             </a>
-            <a href="https://github.com/calypsobronte/widget_mundial_2026" target="_blank" class="btn btn-secondary">
-                <i class="fa-brands fa-github"></i> Ver en GitHub
+            <a href="https://calypsobronte.github.io/widget_mundial_2026/" target="_blank" class="btn btn-secondary">
+                <i class="fa-solid fa-house"></i> Página principal
+            </a>
+            <a href="https://www.paypal.com/donate/?hosted_button_id=8VWL34NBJTTHJ" target="_blank" class="btn btn-donate">
+                <i class="fa-solid fa-heart"></i> Donar
             </a>
         </div>
     </section>
@@ -561,40 +737,42 @@
             </div>
         </section>
 
-        <!-- Cómo usarlo -->
+        <!-- Cómo usarlo (tarjeta) -->
         <section class="section">
-            <div class="section-title">
-                <i class="fa-solid fa-box"></i> Cómo usarlo en OBS / Meld Studio
-            </div>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-num">1</div>
-                    <div class="step-content">
-                        <h4>Agregar fuente de navegador</h4>
-                        <p>En OBS clic derecho en Fuentes → Agregar → Navegador</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">2</div>
-                    <div class="step-content">
-                        <h4>Configurar parámetros</h4>
-                        <p>Width: <code>1100</code> · Height: <code>170</code> · FPS: <code>60</code> · Activar "Refresh browser when scene becomes active"</p>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">3</div>
-                    <div class="step-content">
-                        <h4>Pegar la URL del widget</h4>
-                        <div class="code-block">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html</div>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">4</div>
-                    <div class="step-content">
-                        <h4>¡Listo!</h4>
-                        <p>El widget se actualiza solo cada 30 segundos en tiempo real.</p>
-                    </div>
-                </div>
+            <div class="setup-card">
+                <span class="setup-eyebrow">Configúralo en 1 minuto</span>
+                <h2 class="setup-title">Ayuda para configurar tu stream</h2>
+
+                <ol class="setup-steps">
+                    <li class="setup-step">
+                        <div class="setup-num">1</div>
+                        <div class="setup-body">
+                            <h3>Abre tu software de streaming</h3>
+                            <p>OBS Studio, Streamlabs, Meld Studio, Twitch Studio… cualquiera sirve.</p>
+                        </div>
+                    </li>
+
+                    <li class="setup-step">
+                        <div class="setup-num">2</div>
+                        <div class="setup-body">
+                            <h3>Agrega una Fuente de Navegador y pega este enlace</h3>
+                            <p>En las fuentes, elige <strong>Navegador</strong> (Browser Source) y pega la URL:</p>
+
+                            <span class="url-label">URL del widget</span>
+                            <div class="copy-field">
+                                <span class="copy-url">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay</span>
+                                <button class="copy-btn" onclick="copyField(this)" aria-label="Copiar URL del widget">
+                                    <i class="fa-solid fa-copy"></i><span>Copiar</span>
+                                </button>
+                            </div>
+
+                            <div class="setup-note">
+                                <i class="fa-solid fa-ruler-combined"></i>
+                                <span>Tamaño <strong>1100 × 170 px</strong> · 60 FPS · activa "Refrescar al activar la escena". ¡Listo, se actualiza solo cada 30 s!</span>
+                            </div>
+                        </div>
+                    </li>
+                </ol>
             </div>
         </section>
 
@@ -618,8 +796,8 @@
                     </thead>
                     <tbody>
                         <tr>
-                            <td><code>?home=XXX&away=YYY</code></td>
-                            <td><code>?home=COL&away=ARG</code></td>
+                            <td><code>?home=XXX&amp;away=YYY</code></td>
+                            <td><code>?home=COL&amp;away=ARG</code></td>
                             <td>Muestra ese partido exacto</td>
                         </tr>
                         <tr>
@@ -635,11 +813,24 @@
                     </tbody>
                 </table>
             </div>
-            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ejemplos de URL con filtro:</p>
-            <div class="code-block">...widget_premium_ryukplay.html?home=COL&away=ARG
-...widget_premium_ryukplay.html?home=NZL&away=BEL
-...widget_premium_ryukplay.html?team=COL
-...widget_premium_ryukplay.html?team=ESP</div>
+            <p style="font-size:13px; color:var(--muted); margin-bottom:12px;">Ejemplos de URL con filtro — clic en <strong style="color:var(--emerald)">Copiar</strong>:</p>
+
+            <div class="copy-field">
+                <span class="copy-url">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay?home=COL&amp;away=ARG</span>
+                <button class="copy-btn" onclick="copyField(this)" aria-label="Copiar URL Colombia vs Argentina"><i class="fa-solid fa-copy"></i><span>Copiar</span></button>
+            </div>
+            <div class="copy-field">
+                <span class="copy-url">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay?home=NZL&amp;away=BEL</span>
+                <button class="copy-btn" onclick="copyField(this)" aria-label="Copiar URL Nueva Zelanda vs Bélgica"><i class="fa-solid fa-copy"></i><span>Copiar</span></button>
+            </div>
+            <div class="copy-field">
+                <span class="copy-url">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay?team=COL</span>
+                <button class="copy-btn" onclick="copyField(this)" aria-label="Copiar URL equipo Colombia"><i class="fa-solid fa-copy"></i><span>Copiar</span></button>
+            </div>
+            <div class="copy-field">
+                <span class="copy-url">https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay?team=ESP</span>
+                <button class="copy-btn" onclick="copyField(this)" aria-label="Copiar URL equipo España"><i class="fa-solid fa-copy"></i><span>Copiar</span></button>
+            </div>
         </section>
 
         <!-- Lógica -->
@@ -807,6 +998,37 @@
         Licencia MIT · Uso libre para streams · Créditos a <a href="https://calypsobronte.github.io/" target="_blank">RyukPlay</a> si lo usas públicamente · Datos por <a href="https://www.espn.com/" target="_blank">ESPN API</a>
         <br><br>Built with ❤️ and a lot of coffee.
     </footer>
+
+    <script>
+        function copyField(btn){
+            var field = btn.closest('.copy-field');
+            var url = field.querySelector('.copy-url').textContent.trim();
+            var label = btn.querySelector('span');
+
+            function done(){
+                btn.classList.add('done');
+                if (label) label.textContent = '¡Copiado!';
+                setTimeout(function(){
+                    btn.classList.remove('done');
+                    if (label) label.textContent = 'Copiar';
+                }, 1800);
+            }
+            function fallback(){
+                var t = document.createElement('textarea');
+                t.value = url; t.style.position = 'fixed'; t.style.opacity = '0';
+                document.body.appendChild(t); t.select();
+                try { document.execCommand('copy'); done(); } catch(e){}
+                document.body.removeChild(t);
+            }
+
+            if (navigator.clipboard && navigator.clipboard.writeText){
+                navigator.clipboard.writeText(url).then(done).catch(fallback);
+            } else {
+                fallback();
+            }
+        }
+	console.log('%c[Widget para streams] Mundial 2026 - Hecho por RyukPlay', 'color:#14b8a6');
+    </script>
 
 </body>
 </html>
