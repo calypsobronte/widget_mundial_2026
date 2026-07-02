@@ -274,18 +274,34 @@
         }
         .time.live { color: #111111; }
 
-        /* Tiempo añadido (descuento) — el "+5" / "+2" resaltado en rojo */
-        .time .added {
-            color: #d40100;
+        /* ── Tiempo añadido estilo TV ──
+           El reloj principal se congela en 45:00 / 90:00 / 105:00 / 120:00 y
+           debajo aparece una caja oscura con el cronómetro del descuento y el "+N". */
+        .time-col {
+            position: relative;
+            align-self: stretch;
+            display: flex;
+            flex-shrink: 0;
+        }
+        .time-col .time { align-self: stretch; }
+
+        .stoppage {
+            position: absolute;
+            top: calc(100% + 8px);
+            left: 0;
+            background: #151519;
+            color: #f7f7f8;
+            border-radius: 16px;
+            padding: 10px 20px;
+            font-size: 34px;
             font-weight: 900;
-            margin-left: 2px;
+            line-height: 1;
+            white-space: nowrap;
+            display: none;
+            align-items: center;
+            gap: 14px;
         }
-        /* Segundos del descuento, más pequeños y atenuados */
-        .time .secs {
-            font-size: 0.6em;
-            color: #6b6b70;
-            margin-left: 3px;
-        }
+        .stoppage .plus { color: #46d3ec; }
 
         /* Banner fallback */
         .no-match-banner {
@@ -380,8 +396,13 @@
             </div>
         </div>
 
-        <!-- Hora grande -->
-        <span id="time-display" class="time">16:00</span>
+        <!-- Hora grande + caja de descuento (estilo TV) -->
+        <div class="time-col">
+            <span id="time-display" class="time">16:00</span>
+            <span id="stoppage-display" class="stoppage">
+                <span id="stoppage-clock">0:00</span><span id="stoppage-plus" class="plus">+1</span>
+            </span>
+        </div>
     </div>
 
     <!-- Banner fallback -->
@@ -398,6 +419,46 @@
     const filterHome = (urlParams.get('home') || '').toUpperCase().trim();
     const filterAway = (urlParams.get('away') || '').toUpperCase().trim();
     const filterTeam = (urlParams.get('team') || '').toUpperCase().trim();
+
+    // ── Modo simulación (solo para pruebas, no usa la API) ──
+    // ?sim=1t   → final del 1er tiempo: en ~10s el reloj se congela en 45:00 y sale la caja
+    // ?sim=2t   → final del 2do tiempo: se congela en 90:00
+    // ?sim=et1  → prórroga 1ª parte: se congela en 105:00
+    // ?sim=et2  → prórroga 2ª parte: se congela en 120:00
+    // ?sim=ht   → entretiempo (reloj en 45:00 y "ENT" en la caja de abajo)
+    // ?sim=pen  → tanda de penales en vivo
+    // ?sim=fin  → partido finalizado
+    // Extra: &plus=N fuerza el "+N" de la caja (ej. ?sim=2t&plus=10)
+    //        &home=XXX&away=XXX cambian los equipos también en simulación
+    const simMode = (urlParams.get('sim') || '').toLowerCase().trim();
+    const simPlus = parseInt(urlParams.get('plus') || '', 10);
+
+    function buildSimMatch() {
+        const base = {
+            id: 'sim',
+            homeAbbr: filterHome || 'USA',
+            awayAbbr: filterAway || 'COL',
+            homeScore: 2, awayScore: 0,
+            homeShootout: null, awayShootout: null,
+            homeWinner: false, awayWinner: false,
+            status: 'live', statusName: 'IN_PROGRESS', statusDetail: '',
+            minute: '30:00', period: 1,
+            venue: 'Estadio (simulación)', group: 'SIM',
+            kickoff: new Date().toISOString(),
+        };
+        switch (simMode) {
+            case '1t':  base.minute = '44:50';  base.period = 1; break;
+            case '2t':  base.minute = '89:50';  base.period = 2; break;
+            case 'et1': base.minute = '104:50'; base.period = 3; break;
+            case 'et2': base.minute = '119:50'; base.period = 4; break;
+            case 'ht':  base.minute = 'HT';     base.period = 1; base.statusName = 'HALFTIME'; break;
+            case 'pen': base.minute = '';       base.period = 5; base.statusName = 'SHOOTOUT';
+                        base.homeScore = 1; base.awayScore = 1;
+                        base.homeShootout = 4; base.awayShootout = 3; break;
+            case 'fin': base.status = 'finished'; base.statusName = 'FULL_TIME'; base.period = 2; break;
+        }
+        return base;
+    }
 
     function matchesFilter(m) {
         if (!filterHome && !filterAway && !filterTeam) return true;
@@ -420,6 +481,7 @@
     let liveBaseSeconds   = 0;
     let liveLastMinuteStr = '';
     let livePeriod        = 1;  // período actual (1=1ºT, 2=2ºT, 3/4=prórroga)
+    let liveEspnPlus      = null; // "+N" reportado por ESPN en el clock ("45+3")
 
     function periodLimit(period) {
         switch (period) {
@@ -429,6 +491,29 @@
             case 4: return 120;
             default: return 90;
         }
+    }
+
+    function showStoppage(mm, ss, plus) {
+        const box = document.getElementById('stoppage-display');
+        if (!box) return;
+        const plusEl = document.getElementById('stoppage-plus');
+        document.getElementById('stoppage-clock').textContent = mm + ':' + String(ss).padStart(2, '0');
+        plusEl.textContent   = '+' + plus;
+        plusEl.style.display = '';
+        box.style.display    = 'inline-flex';
+    }
+
+    function showBreakTag(text) {
+        const box = document.getElementById('stoppage-display');
+        if (!box) return;
+        document.getElementById('stoppage-clock').textContent = text;
+        document.getElementById('stoppage-plus').style.display = 'none';
+        box.style.display = 'inline-flex';
+    }
+
+    function hideStoppage() {
+        const box = document.getElementById('stoppage-display');
+        if (box) box.style.display = 'none';
     }
 
     function startLiveTimer(minuteStr, period) {
@@ -444,23 +529,21 @@
             const el      = document.getElementById('time-display');
             if (!el) return;
 
-            // Límite reglamentario del período: 45 (1ºT), 90 (2ºT), 105 / 120 (prórroga).
-            // En cuanto el reloj pasa ese límite, mostramos el descuento como "+N",
-            // así NUNCA se ve 46:00, 91:00, 100:00… sino 45+1, 90+2, etc.
             const limit = periodLimit(livePeriod);
 
             if (total > limit * 60) {
-                // Tiempo adicional: minuto base (45/90/105/120) + el "+N" resaltado + segundos pequeños
-                // Ej.: 90 +2 :40  →  "90" negro · "+2" rojo · ":40" pequeño gris
+                el.textContent = limit + ':00';
                 const extraTotal = total - (limit * 60);
                 const extraMM    = Math.floor(extraTotal / 60);
                 const extraSS    = extraTotal % 60;
-                el.innerHTML = limit
-                    + '<span class="added">+' + extraMM + '</span>'
-                    + '<span class="secs">:' + String(extraSS).padStart(2,'0') + '</span>';
+                // "+N": el reportado por ESPN si existe; si no, el minuto de
+                // descuento que se está jugando (0:28 → +1, 1:12 → +2…).
+                const plus = liveEspnPlus != null ? liveEspnPlus : (extraMM + 1);
+                showStoppage(extraMM, extraSS, plus);
             } else {
                 // Tiempo normal: "45:32"
                 el.textContent = String(Math.floor(total/60)).padStart(2,'0') + ':' + String(total%60).padStart(2,'0');
+                hideStoppage();
             }
             el.className = 'time live';
         }
@@ -471,14 +554,11 @@
     function stopLiveTimer() {
         if (liveTimerInterval) { clearInterval(liveTimerInterval); liveTimerInterval = null; }
         liveStartMs = null; liveBaseSeconds = 0; liveLastMinuteStr = ''; livePeriod = 1;
+        liveEspnPlus = null;
+        hideStoppage();
     }
 
-    // Convierte el clock de ESPN a segundos totales transcurridos en el partido.
-    // Soporta: "90+2:00", "90+2", "45:30", "45'", "HT", o minuto plano sin "+"
-    // que ya superó el límite del período (descuento implícito).
     function parseMinuteToSeconds(str, period) {
-        // ESPN manda el reloj como "45'", "90'+2'", "HT"… Quitamos apóstrofos
-        // y espacios para que el "+" del descuento se detecte correctamente.
         const clean = String(str || '').replace(/['′\s]/g, '').toUpperCase();
         if (clean === 'HT') return periodLimit(1) * 60;
         if (clean === '' || clean === 'FT' || clean === 'PEN') return periodLimit(period) * 60;
@@ -509,7 +589,7 @@
         'MLI':'ml','BFA':'bf','ZIM':'zw','GAB':'ga','GUI':'gn','CPV':'cv','MOZ':'mz','TAN':'tz','UGA':'ug','ANG':'ao',
         'JPN':'jp','KOR':'kr','IRN':'ir','AUS':'au','KSA':'sa','QAT':'qa','UAE':'ae','IRQ':'iq','JOR':'jo','SYR':'sy',
         'UZB':'uz','TJK':'tj','KGZ':'kg','OMN':'om','BHR':'bh','VIE':'vn','THA':'th','IDN':'id','PHI':'ph','MAS':'my',
-        'NZL':'nz','FIJ':'fj','PNG':'pg','SOL':'sb','VAN':'vu','NCL':'nc','PYF':'pf','ASA':'as','SAM':'ws','TON':'to','COK':'ck',
+        'NZL':'nz','FIJ':'fj','PNG':'pg','SOL':'sb','VAN':'vu','NCL':'nc','PYF':'pf','ASA':'as','SAM':'ws','TON':'to','COK':'ck','BIH':'ba','CPV':'cv'
     };
     function flagUrl(a) {
         return FLAGS[a] ? `https://flagcdn.com/w160/${FLAGS[a]}.png` : 'https://flagcdn.com/w160/un.png';
@@ -530,15 +610,14 @@
         return 'upcoming';
     }
 
-    // ¿El partido se definió (o se está definiendo) en la tanda de penales?
+    // Penales
     function isShootout(m) {
         if (m.homeShootout != null || m.awayShootout != null) return true;
         const s = (m.statusName + ' ' + m.statusDetail).toUpperCase();
         return s.includes('SHOOTOUT') || s.includes('PENALT') || /\bPENS?\b/.test(s);
     }
 
-    // ¿Hubo (o hay) tiempo extra / prórroga? Períodos 3 y 4 son la prórroga;
-    // el 5 suele ser la tanda. También lo deducimos del nombre del estado.
+    // Tiempo extra / prórroga
     function wentToExtraTime(m) {
         if (m.period >= 3) return true;
         const s = (m.statusName + ' ' + m.statusDetail).toUpperCase();
@@ -615,7 +694,7 @@
         prevHomeScore = newHome;
         prevAwayScore = newAway;
 
-        // ── Penales: pintar el marcador de la tanda en las pastillas ──
+        // ── Penales ──
         const homePensEl = document.getElementById('home-pens');
         const awayPensEl = document.getElementById('away-pens');
         if (match.status !== 'upcoming' &&
@@ -644,14 +723,27 @@
         // Hora / contador
         const timeEl = document.getElementById('time-display');
         if (match.status === 'live') {
+            const clockRaw = String(match.minute || '').replace(/['′\s]/g, '').toUpperCase();
+            const sName    = ((match.statusName || '') + ' ' + (match.statusDetail || '')).toUpperCase();
             if (isShootout(match)) {
                 // Tanda de penales en vivo: no corre el reloj de minutos.
                 stopLiveTimer();
                 timeEl.textContent = 'PEN';
                 timeEl.className   = 'time live';
+            } else if (clockRaw === 'HT' || sName.includes('HALFTIME')) {
+                // Descanso: el reloj se queda en números (45:00) y la
+                // etiqueta "ENT" va en la caja de abajo.
+                stopLiveTimer();
+                timeEl.textContent = '45:00';
+                timeEl.className   = 'time live';
+                showBreakTag('ENT');
             } else {
                 const newMinute = match.minute || '0:00';
                 const newPeriod = match.period || 1;
+                // "+N" oficial del clock de ESPN API ("45+3", "90+2:40"…): se usa en
+                // la caja de descuento. Si no viene, se calcula localmente.
+                const plusMatch = String(newMinute).replace(/['′\s]/g, '').match(/^\d+\+(\d+)/);
+                liveEspnPlus = plusMatch ? parseInt(plusMatch[1], 10) : null;
                 const periodChanged = isNewMatch || newPeriod !== liveLastPeriod;
                 // Reiniciar el contador si es partido nuevo, cambió el período,
                 // o el clock de ESPN se "saltó" hacia atrás/adelante de forma inesperada
@@ -761,10 +853,18 @@
 
     async function init() {
         console.log('%c[Widget] Mundial 2026 — Hecho por RyukPlay', 'color:#14b8a6;font-weight:bold;font-size:14px');
+
+        if (simMode) {
+            console.log('%c[SIMULACIÓN] escenario:', 'color:#fbbf24;font-weight:bold', simMode, isNaN(simPlus) ? '' : `(+${simPlus})`);
+            updateWidget(buildSimMatch());
+            if (!isNaN(simPlus)) liveEspnPlus = simPlus;
+            return;
+        }
+
         if (filterHome || filterAway || filterTeam)
             console.log('%c[Filtros activos]', 'color:#fbbf24', { home: filterHome||'—', away: filterAway||'—', team: filterTeam||'—' });
         await fetchData();
-        setInterval(fetchData, 30000);
+        setInterval(fetchData, 15000);
     }
 
     window.onload = init;
