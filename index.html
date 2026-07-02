@@ -14,11 +14,13 @@
     <meta property="og:url" content="https://calypsobronte.github.io">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="RyukPlay">
-    <meta http-equiv="refresh" content="300">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
         body { font-family: 'Inter', system_ui, sans-serif; }
+        /* Fila de botones deslizable en móvil (sin barra de scroll visible) */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
         .teal-score { background: linear-gradient(145deg, #14b8a6, #0f766e); color: white; }
         .live-dot { animation: pulse-live 2s infinite; }
         @keyframes pulse-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
@@ -76,54 +78,105 @@
                    border: 1px solid rgba(255,255,255,.15); color: #fff; cursor: pointer; flex-shrink: 0;
                    display: flex; align-items: center; justify-content: center; }
         .bkt-nav:hover { background: rgba(255,255,255,.18); }
+
+        /* Bracket más compacto en pantallas pequeñas */
+        @media (max-width: 480px) {
+            .bkt-round { width: 200px; flex: 0 0 200px; }
+            .bkt-round:not(:last-child) { padding-right: 38px; }
+            .bkt-round:not(:last-child) .bkt-match::after { width: 19px; }
+            .bkt-round:not(:last-child) .bkt-match:nth-child(odd)::before,
+            .bkt-round:not(:last-child) .bkt-match:nth-child(even)::before { left: calc(100% + 19px); }
+            .bkt-round:not(:first-child) .bkt-card::before { width: 19px; }
+        }
     </style>
 </head>
 <body class="bg-zinc-950 text-white">
 
     <div class="border-b border-white/10 bg-zinc-900/70 backdrop-blur-lg sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-y-3">
-                <div class="flex items-center gap-x-3">
-                    <div class="w-10 h-10 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center flex-shrink-0">
-                        <i class="fa-solid fa-tachometer-alt text-white text-2xl"></i>
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+            <div class="flex items-center justify-between gap-x-3">
+                <div class="flex items-center gap-x-3 min-w-0">
+                    <div class="w-9 h-9 lg:w-10 lg:h-10 bg-gradient-to-br from-emerald-400 to-teal-600 rounded-2xl flex items-center justify-center flex-shrink-0">
+                        <i class="fa-solid fa-tachometer-alt text-white text-lg lg:text-xl"></i>
                     </div>
-                    <div>
-                        <div class="font-black text-2xl sm:text-3xl tracking-tighter">Resultados en Tiempo Real</div>
-                        <div class="text-[10px] text-emerald-400 -mt-1.5 font-bold tracking-[3px]">FIFA WORLD CUP 2026™</div>
+                    <div class="min-w-0">
+                        <div class="font-black text-lg sm:text-xl lg:text-2xl xl:text-3xl tracking-tighter leading-tight whitespace-nowrap truncate">Resultados en Tiempo Real</div>
+                        <div class="text-[9px] lg:text-[10px] text-emerald-400 font-bold tracking-[3px]">FIFA WORLD CUP 2026™</div>
                     </div>
                 </div>
 
-                <div class="flex flex-wrap items-center gap-x-2 gap-y-2 w-full sm:w-auto">
-                    <button onclick="showFinishedMatches()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                <!-- Navegación de escritorio: todo en una sola línea, Actualizar y Donar a la derecha -->
+                <div class="hidden lg:flex items-center gap-x-2 flex-shrink-0">
+                    <button onclick="showFinishedMatches()" class="flex items-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold whitespace-nowrap">
                         <i class="fa-solid fa-history fa-sm"></i>
-                        <span>Resultados Anteriores</span>
+                        <span>Resultados</span>
                     </button>
-
-                    <button onclick="showBracket()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                    <button onclick="showBracket()" class="flex items-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold whitespace-nowrap">
                         <i class="fa-solid fa-sitemap fa-sm"></i>
                         <span>Eliminatoria</span>
                     </button>
-
-                    <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold w-full sm:w-auto">
+                    <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay" target="_blank" class="flex items-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold whitespace-nowrap">
                         <i class="fa-solid fa-external-link-alt fa-sm"></i>
-                        <span>Obtener Widget OBS</span>
+                        <span>Widget OBS</span>
                     </a>
-
-                    <button onclick="manualRefresh()" class="flex items-center justify-center gap-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-bold w-full sm:w-auto">
-                        <i class="fa-solid fa-sync fa-sm" id="refresh-icon"></i>
+                    <a href="https://calypsobronte.github.io/widget_mundial_2026/docs" target="_blank" class="flex items-center gap-x-2 px-4 py-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-3xl text-sm font-bold whitespace-nowrap">
+                        <i class="fa-solid fa-circle-question fa-sm"></i>
+                        <span>Cómo usarlo</span>
+                    </a>
+                    <button onclick="manualRefresh()" class="flex items-center gap-x-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded-3xl text-sm font-bold whitespace-nowrap">
+                        <i class="fa-solid fa-sync fa-sm refresh-icon"></i>
                         <span>Actualizar</span>
                     </button>
+                    <a href="https://www.paypal.com/donate/?hosted_button_id=8VWL34NBJTTHJ" target="_blank" class="flex items-center gap-x-2 px-4 py-2 bg-amber-400 hover:bg-amber-500 text-zinc-900 border border-amber-300/40 rounded-3xl text-sm font-bold whitespace-nowrap">
+                        <i class="fa-solid fa-heart fa-sm"></i>
+                        <span>Donar</span>
+                    </a>
                 </div>
+
+                <!-- Móvil / tablet: Donar siempre visible + botón hamburguesa -->
+                <div class="flex lg:hidden items-center gap-x-2 flex-shrink-0">
+                    <a href="https://www.paypal.com/donate/?hosted_button_id=8VWL34NBJTTHJ" target="_blank" class="flex items-center gap-x-2 px-3.5 py-2 bg-amber-400 hover:bg-amber-500 text-zinc-900 border border-amber-300/40 rounded-3xl text-sm font-bold whitespace-nowrap">
+                        <i class="fa-solid fa-heart fa-sm"></i>
+                        <span>Donar</span>
+                    </a>
+                    <button onclick="toggleMenu()" aria-label="Abrir menú" aria-expanded="false" id="menu-toggle" class="w-10 h-10 flex items-center justify-center bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl">
+                        <i class="fa-solid fa-bars" id="menu-icon"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Menú desplegable (hamburguesa) -->
+            <div id="mobile-menu" class="hidden lg:hidden mt-3 pb-1 flex-col gap-y-2">
+                <button onclick="showFinishedMatches(); closeMenu()" class="w-full flex items-center gap-x-3 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-sm font-bold">
+                    <i class="fa-solid fa-history fa-sm w-4 text-center"></i>
+                    <span>Resultados anteriores</span>
+                </button>
+                <button onclick="showBracket(); closeMenu()" class="w-full flex items-center gap-x-3 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-sm font-bold">
+                    <i class="fa-solid fa-sitemap fa-sm w-4 text-center"></i>
+                    <span>Eliminatoria</span>
+                </button>
+                <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay" target="_blank" class="w-full flex items-center gap-x-3 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-sm font-bold">
+                    <i class="fa-solid fa-external-link-alt fa-sm w-4 text-center"></i>
+                    <span>Obtener Widget OBS</span>
+                </a>
+                <a href="https://calypsobronte.github.io/widget_mundial_2026/docs" target="_blank" class="w-full flex items-center gap-x-3 px-4 py-2.5 bg-white/10 hover:bg-white/20 border border-white/20 text-white rounded-2xl text-sm font-bold">
+                    <i class="fa-solid fa-circle-question fa-sm w-4 text-center"></i>
+                    <span>Cómo usarlo</span>
+                </a>
+                <button onclick="manualRefresh(); closeMenu()" class="w-full flex items-center gap-x-3 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-2xl text-sm font-bold">
+                    <i class="fa-solid fa-sync fa-sm w-4 text-center refresh-icon"></i>
+                    <span>Actualizar</span>
+                </button>
             </div>
         </div>
     </div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 pt-6 pb-12">
         <div class="mb-6">
-            <h3 class="text-3xl sm:text-4xl font-black tracking-tighter">Todos los partidos Mundial 2026</h3>
-            <p class="text-white/60 mt-1 text-sm">Datos en tiempo real. También obtén el <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay.html" target="_blank" class="text-[15px] font-black tracking-wider text-white hover:text-emerald-400">widget para tus streams.</a></p>
+            <h3 class="text-2xl sm:text-3xl lg:text-4xl font-black tracking-tighter">Todos los partidos Mundial 2026</h3>
+            <p class="text-white/60 mt-1 text-sm">Datos en tiempo real. También obtén el <a href="https://calypsobronte.github.io/widget_mundial_2026/widget_premium_ryukplay" target="_blank" class="text-[15px] font-black tracking-wider text-white hover:text-emerald-400">widget para tus streams.</a></p>
         </div>
-        <div id="matches-container" class="space-y-8"></div>
+        <div id="matches-container" class="space-y-4 sm:space-y-6"></div>
         <div class="mt-10 text-center">
             <p class="text-xs text-white/50">
                 Realizado por <a href="https://calypsobronte.github.io/" target="_blank" class="text-[10px] font-black tracking-wider text-white hover:text-emerald-400">RYUKPLAY</a>
@@ -132,6 +185,23 @@
     </div>
 
     <script>
+        // ── Menú hamburguesa (móvil / tablet) ──
+        function toggleMenu() {
+            const menu = document.getElementById('mobile-menu');
+            const icon = document.getElementById('menu-icon');
+            const btn  = document.getElementById('menu-toggle');
+            const open = menu.classList.contains('hidden');
+            menu.classList.toggle('hidden', !open);
+            menu.classList.toggle('flex', open);
+            icon.className = open ? 'fa-solid fa-xmark' : 'fa-solid fa-bars';
+            icon.id = 'menu-icon';
+            btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        }
+        function closeMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (!menu.classList.contains('hidden')) toggleMenu();
+        }
+
         let currentView = 'main';
         const ESPN_API = 'https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?limit=1000&dates=20260611-20260719';
         let matchesData = {};
@@ -477,13 +547,13 @@
             currentView = 'main';
             firstLoad = true;
             
-            const icon = document.getElementById('refresh-icon');
-            icon.style.animation = 'spin 1s linear infinite';
+            const icons = document.querySelectorAll('.refresh-icon');
+            icons.forEach(i => i.style.animation = 'spin 1s linear infinite');
             previousData = {};
             const container = document.getElementById('matches-container');
             container.innerHTML = '';
             fetchMatches().finally(() => {
-                icon.style.animation = '';
+                icons.forEach(i => i.style.animation = '');
             });
         }
 
@@ -680,58 +750,60 @@
             const div = document.createElement('div');
             div.className = `bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden match-card`;
 
-            let timeDisplay = '';
+            // Chip de hora/minuto: va junto al estado, arriba de la tarjeta,
+            // para que la fila del marcador nunca se desborde en pantallas pequeñas.
+            let timeChip = '';
             if (data.status === 'live') {
-                timeDisplay = `<div class="bg-red-500 text-white font-mono font-extrabold text-sm px-4 py-1.5 rounded-r-3xl flex items-center justify-center min-w-[70px]"><span>${liveBadgeInner(data)}</span></div>`;
+                timeChip = `<div class="px-3 py-1 bg-red-500 text-white font-mono font-extrabold text-xs rounded-2xl flex items-center justify-center">${liveBadgeInner(data)}</div>`;
             } else if (data.status === 'finished') {
-                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-5 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]">${finishedLabel(data)}</div>`;
+                timeChip = `<div class="px-3 py-1 bg-zinc-800 border border-white/10 text-white/90 font-mono font-extrabold text-xs rounded-2xl flex items-center justify-center">${finishedLabel(data)}</div>`;
             } else {
-                timeDisplay = `<div class="bg-zinc-800 text-white/90 font-mono font-extrabold text-sm px-4 py-1.5 flex items-center justify-center rounded-r-3xl min-w-[70px]"><span>${data.scheduledTime}</span></div>`;
+                timeChip = `<div class="px-3 py-1 bg-zinc-800 border border-white/10 text-white/90 font-mono font-extrabold text-xs rounded-2xl flex items-center justify-center">${data.scheduledTime}</div>`;
             }
 
             const statusHTML = data.status === 'live' 
-                ? `<div class="px-3 py-1 bg-red-500 text-white text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><div class="w-2 h-2 bg-white rounded-full live-dot"></div><span>EN VIVO</span></div>`
+                ? `<div class="px-3 py-1 bg-red-500 text-white text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5 whitespace-nowrap"><div class="w-2 h-2 bg-white rounded-full live-dot"></div><span>EN VIVO</span></div>`
                 : data.status === 'finished'
-                ? `<div class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-check-double fa-xs"></i><span>FINALIZADO</span></div>`
-                : `<div class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5"><i class="fa-solid fa-clock fa-xs"></i><span>PRÓXIMO</span></div>`;
+                ? `<div class="px-3 py-1 bg-emerald-500/10 text-emerald-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5 whitespace-nowrap"><i class="fa-solid fa-check-double fa-xs"></i><span>FINALIZADO</span></div>`
+                : `<div class="px-3 py-1 bg-amber-500/10 text-amber-400 text-xs font-extrabold rounded-2xl flex items-center gap-x-1.5 whitespace-nowrap"><i class="fa-solid fa-clock fa-xs"></i><span>PRÓXIMO</span></div>`;
 
             div.innerHTML = `
-                <div class="px-4 sm:px-5 pt-3 pb-1">
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center gap-x-2 text-xs">
-                            <span class="text-emerald-400 font-bold">${data.group}</span>
+                <div class="px-3 sm:px-5 pt-3 pb-3">
+                    <div class="flex items-center justify-between gap-x-2 mb-2.5">
+                        <span class="text-emerald-400 font-bold text-xs truncate min-w-0">${data.group}</span>
+                        <div class="flex items-center gap-x-1.5 sm:gap-x-2 flex-shrink-0">
+                            ${statusHTML}
+                            ${timeChip}
                         </div>
-                        ${statusHTML}
                     </div>
 
-                    <div class="flex items-center bg-zinc-900 border border-white/10 rounded-3xl overflow-hidden">
-                        <div class="flex items-center flex-1 pl-4 pr-3 py-3.5 gap-x-3 bg-gradient-to-r from-rose-500/10 to-transparent">
-                            <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
-                            <div class="font-extrabold text-xl">${data.homeAbbr}</div>
+                    <div class="flex items-center bg-zinc-900 border border-white/10 rounded-2xl sm:rounded-3xl overflow-hidden">
+                        <div class="flex items-center flex-1 min-w-0 pl-3 sm:pl-4 pr-1.5 sm:pr-3 py-3 sm:py-3.5 gap-x-2 sm:gap-x-3 bg-gradient-to-r from-rose-500/10 to-transparent">
+                            <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded flex-shrink-0">
+                            <div class="font-extrabold text-base sm:text-xl truncate">${data.homeAbbr}</div>
                         </div>
-                        
-                        <div class="teal-score w-[58px] h-[50px] flex items-center justify-center text-3xl font-black rounded-3xl mx-1 border border-white/30">
+
+                        <div class="teal-score w-10 h-10 sm:w-[58px] sm:h-[50px] flex items-center justify-center text-xl sm:text-3xl font-black rounded-xl sm:rounded-3xl mx-0.5 sm:mx-1 border border-white/30 flex-shrink-0">
                             <span>${data.homeScore}</span>
                         </div>
-                        
-                        <div class="px-2 flex flex-col items-center"><div class="text-2xl">🏆</div></div>
-                        
-                        <div class="teal-score w-[58px] h-[50px] flex items-center justify-center text-3xl font-black rounded-3xl mx-1 border border-white/30">
+
+                        <div class="px-1 sm:px-2 flex-shrink-0 flex flex-col items-center"><div class="text-base sm:text-2xl">🏆</div></div>
+
+                        <div class="teal-score w-10 h-10 sm:w-[58px] sm:h-[50px] flex items-center justify-center text-xl sm:text-3xl font-black rounded-xl sm:rounded-3xl mx-0.5 sm:mx-1 border border-white/30 flex-shrink-0">
                             <span>${data.awayScore}</span>
                         </div>
-                        
-                        <div class="flex items-center flex-1 justify-end pr-4 pl-3 py-3.5 gap-x-3 bg-gradient-to-l from-purple-500/10 to-transparent">
-                            <div class="font-extrabold text-xl">${data.awayAbbr}</div>
-                            <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+
+                        <div class="flex items-center flex-1 min-w-0 justify-end pr-3 sm:pr-4 pl-1.5 sm:pl-3 py-3 sm:py-3.5 gap-x-2 sm:gap-x-3 bg-gradient-to-l from-purple-500/10 to-transparent">
+                            <div class="font-extrabold text-base sm:text-xl truncate">${data.awayAbbr}</div>
+                            <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded flex-shrink-0">
                         </div>
-                        ${timeDisplay}
                     </div>
 
                     ${penaltyHTML(data)}
 
-                    <div class="mt-1.5 text-xs text-white/50 flex items-center gap-x-1.5 px-1">
-                        <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
-                        <span>${data.venue}</span>
+                    <div class="mt-2 text-xs text-white/50 flex items-center gap-x-1.5 px-1 min-w-0">
+                        <i class="fa-solid fa-map-marker-alt text-emerald-400 flex-shrink-0"></i>
+                        <span class="truncate">${data.venue}</span>
                     </div>
                 </div>
             `;
@@ -767,9 +839,9 @@
             div.className = `bg-zinc-900 border border-white/10 rounded-3xl p-4`;
 
             div.innerHTML = `
-                <div class="flex items-center justify-between mb-2">
-                    <div class="text-xs text-emerald-400 font-bold">${data.group}</div>
-                    <div class="px-3 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-2xl flex items-center gap-x-1.5">
+                <div class="flex items-center justify-between gap-x-2 mb-2">
+                    <div class="text-xs text-emerald-400 font-bold truncate min-w-0">${data.group}</div>
+                    <div class="px-3 py-0.5 bg-emerald-500/10 text-emerald-400 text-xs font-bold rounded-2xl flex items-center gap-x-1.5 whitespace-nowrap flex-shrink-0">
                         <i class="fa-solid fa-check-double fa-xs"></i>
                         <span>${finishedLabel(data) === 'PEN' ? 'Ganó en penales'
                               : finishedLabel(data) === 'AET' ? 'Tras la prórroga'
@@ -778,28 +850,28 @@
                 </div>
 
                 <div class="flex items-center justify-between">
-                    <div class="flex items-center gap-x-3 flex-1">
-                        <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
-                        <span class="font-bold text-lg">${data.homeAbbr}</span>
+                    <div class="flex items-center gap-x-2 sm:gap-x-3 flex-1 min-w-0">
+                        <img src="${flags[data.homeAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded flex-shrink-0">
+                        <span class="font-bold text-base sm:text-lg truncate">${data.homeAbbr}</span>
                     </div>
 
-                    <div class="flex items-center gap-x-4 px-6">
-                        <span class="font-black text-3xl">${data.homeScore}</span>
-                        <span class="text-white/40 text-xl">-</span>
-                        <span class="font-black text-3xl">${data.awayScore}</span>
+                    <div class="flex items-center gap-x-2 sm:gap-x-4 px-3 sm:px-6 flex-shrink-0">
+                        <span class="font-black text-2xl sm:text-3xl">${data.homeScore}</span>
+                        <span class="text-white/40 text-lg sm:text-xl">-</span>
+                        <span class="font-black text-2xl sm:text-3xl">${data.awayScore}</span>
                     </div>
 
-                    <div class="flex items-center gap-x-3 flex-1 justify-end">
-                        <span class="font-bold text-lg">${data.awayAbbr}</span>
-                        <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-8 h-5.5 object-cover rounded-md">
+                    <div class="flex items-center gap-x-2 sm:gap-x-3 flex-1 min-w-0 justify-end">
+                        <span class="font-bold text-base sm:text-lg truncate">${data.awayAbbr}</span>
+                        <img src="${flags[data.awayAbbr] || 'https://flagcdn.com/w80/un.png'}" class="w-6 h-4 sm:w-8 sm:h-5 object-cover rounded flex-shrink-0">
                     </div>
                 </div>
 
                 ${penaltyHTML(data)}
 
-                <div class="mt-2 text-xs text-white/50 flex items-center gap-x-1.5">
-                    <i class="fa-solid fa-map-marker-alt text-emerald-400"></i>
-                    <span>${data.venue}</span>
+                <div class="mt-2 text-xs text-white/50 flex items-center gap-x-1.5 min-w-0">
+                    <i class="fa-solid fa-map-marker-alt text-emerald-400 flex-shrink-0"></i>
+                    <span class="truncate">${data.venue}</span>
                 </div>
             `;
             return div;
